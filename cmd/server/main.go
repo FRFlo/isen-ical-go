@@ -1,3 +1,5 @@
+// Package main est le point d'entrée de l'application ISEN iCal.
+// Il configure et démarre le serveur HTTP avec toutes ses dépendances.
 package main
 
 import (
@@ -17,10 +19,15 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+// main est le point d'entrée principal de l'application.
+// Il configure l'interface en ligne de commande avec toutes les options disponibles
+// et démarre le serveur HTTP avec la configuration appropriée.
 func main() {
 	cmd := &cli.Command{
 		Name:  "isen-ical",
 		Usage: "ISEN Calendar Generator - Convert Aurion planning to iCal",
+		// Configuration des flags CLI - chaque flag peut être défini via
+		// les arguments de ligne de commande ou les variables d'environnement
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "port",
@@ -72,14 +79,18 @@ func main() {
 				Sources: cli.EnvVars("GIN_MODE"),
 			},
 		},
+		// Action principale : initialise et démarre le serveur
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			// Initialisation du logger structuré avec zerolog
 			logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
+			// Récupération et validation du port
 			port, err := strconv.Atoi(cmd.String("port"))
 			if err != nil {
-				return fmt.Errorf("invalid port: %w", err)
+				return fmt.Errorf("port invalide: %w", err)
 			}
 
+			// Construction de la configuration à partir des flags
 			cfg := &config.Config{
 				Port:             port,
 				ValkeyURL:        cmd.String("valkey-url"),
@@ -89,41 +100,48 @@ func main() {
 				CacheTTL:         cmd.Int("cache-ttl"),
 			}
 
+			// Traitement de la clé de chiffrement (optionnelle mais recommandée)
 			encKeyHex := cmd.String("encryption-key")
 			if encKeyHex != "" {
 				encKey, err := hex.DecodeString(encKeyHex)
 				if err != nil {
-					return fmt.Errorf("encryption-key must be valid hex: %w", err)
+					return fmt.Errorf("encryption-key doit être en hexadécimal valide: %w", err)
 				}
 				if len(encKey) != 32 {
-					return fmt.Errorf("encryption-key must be 32 bytes (64 hex chars), got %d bytes", len(encKey))
+					return fmt.Errorf("encryption-key doit faire 32 octets (64 caractères hex), reçu %d octets", len(encKey))
 				}
 				cfg.EncryptionKey = encKey
 			}
 
+			// Configuration du mode Gin (debug ou release)
 			if cmd.String("gin-mode") == "release" {
 				gin.SetMode(gin.ReleaseMode)
 			}
 
+			// Connexion à Valkey (Redis) pour le stockage des sessions et du cache
 			valkeyClient, err := storage.NewValkeyClient(cfg.ValkeyURL)
 			if err != nil {
-				logger.Fatal().Err(err).Msg("Failed to connect to Valkey")
+				logger.Fatal().Err(err).Msg("Échec de connexion à Valkey")
 			}
 			defer valkeyClient.Close()
 
+			// Configuration du routeur Gin avec les middlewares
 			router := gin.New()
 			middleware.SetupMiddleware(router)
 
+			// Initialisation des handlers avec leurs dépendances
 			h := handlers.New(cfg, valkeyClient)
 			h.RegisterRoutes(router)
 
+			// Démarrage du serveur HTTP
 			portStr := strconv.Itoa(cfg.Port)
-			logger.Info().Str("port", portStr).Msg("Starting server")
+			logger.Info().Str("port", portStr).Msg("Démarrage du serveur")
 			return router.Run(":" + portStr)
 		},
 	}
 
+	// Exécution de la commande CLI
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		log.Fatal().Err(err).Msg("Server failed")
+		log.Fatal().Err(err).Msg("Échec du serveur")
 	}
 }

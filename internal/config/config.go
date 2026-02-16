@@ -1,3 +1,5 @@
+// Package config gère la configuration de l'application.
+// Il charge les paramètres depuis les variables d'environnement avec des valeurs par défaut.
 package config
 
 import (
@@ -7,7 +9,8 @@ import (
 	"strconv"
 )
 
-// Config holds all application configuration
+// Config contient tous les paramètres de configuration de l'application.
+// Les valeurs sont chargées depuis les variables d'environnement.
 type Config struct {
 	AurionBaseURL    string `envconfig:"AURION_BASE_URL"`
 	ValkeyURL        string `envconfig:"VALKEY_URL"`
@@ -18,7 +21,8 @@ type Config struct {
 	CacheTTL         int    `envconfig:"CACHE_TTL"`
 }
 
-// Load loads configuration from environment variables with defaults
+// Load charge la configuration depuis les variables d'environnement avec des valeurs par défaut.
+// Retourne une erreur si la clé de chiffrement est invalide.
 func Load() (*Config, error) {
 	cfg := &Config{
 		AurionBaseURL:    getEnv("AURION_BASE_URL", "https://aurion.junia.com"),
@@ -29,7 +33,7 @@ func Load() (*Config, error) {
 		CacheTTL:         getEnvInt("CACHE_TTL", 3600),
 	}
 
-	// Load encryption key (32-byte hex for AES-256)
+	// Chargement de la clé de chiffrement (32 octets en hex pour AES-256)
 	encKeyHex := getEnv("ENCRYPTION_KEY", "")
 	if encKeyHex != "" {
 		encKey, err := hex.DecodeString(encKeyHex)
@@ -45,7 +49,7 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
-// getEnv retrieves an environment variable or returns a default value
+// getEnv récupère une variable d'environnement ou retourne une valeur par défaut.
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
@@ -53,7 +57,7 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// getEnvInt retrieves an environment variable as int or returns a default value
+// getEnvInt récupère une variable d'environnement en tant qu'entier ou retourne une valeur par défaut.
 func getEnvInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intVal, err := strconv.Atoi(value); err == nil {

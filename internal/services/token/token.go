@@ -1,4 +1,4 @@
-// Package token provides AES-GCM encryption and token management
+// Package token fournit le chiffrement AES-GCM et la gestion des tokens
 package token
 
 import (
@@ -21,18 +21,18 @@ const (
 	MaxTokensPerUser = 3
 )
 
-// Service provides token encryption and management
+// Service fournit le chiffrement et la gestion des tokens
 type Service struct {
 	valkey *storage.ValkeyClient
 }
 
-// NewService creates a new token service
+// NewService crée un nouveau service de token
 func NewService(valkey *storage.ValkeyClient) *Service {
 	return &Service{valkey: valkey}
 }
 
-// Encrypt encrypts plaintext using AES-GCM with the provided key
-// Returns the encrypted data and the IV used
+// Encrypt chiffre un texte avec AES-GCM et la clé fournie
+// Retourne les données chiffrées et le IV utilisé
 func Encrypt(plaintext []byte, key []byte) (encrypted []byte, iv []byte, err error) {
 	if len(key) != KeySize {
 		return nil, nil, fmt.Errorf("invalid key size: expected %d bytes, got %d", KeySize, len(key))

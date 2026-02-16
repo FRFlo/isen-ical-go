@@ -10,9 +10,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// LoggerMiddleware returns a Gin middleware that logs HTTP requests using zerolog.
-// It logs method, path, status, latency, client IP, user agent, query params, and errors.
-// Log level is determined by status code: Error for 5xx, Warn for 4xx, Info for success.
+// LoggerMiddleware retourne un middleware Gin qui journalise les requêtes HTTP avec zerolog.
+// Il enregistre la méthode, le chemin, le statut, la latence, l'IP client, le user agent,
+// les paramètres de requête et les erreurs.
+// Le niveau de log est déterminé par le code de statut : Error pour 5xx, Warn pour 4xx, Info pour le succès.
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
@@ -73,8 +74,8 @@ func LoggerMiddleware() gin.HandlerFunc {
 	}
 }
 
-// RecoveryMiddleware returns a Gin middleware that recovers from panics.
-// It logs the panic with stack trace and returns a 500 error.
+// RecoveryMiddleware retourne un middleware Gin qui récupère les panics.
+// Il journalise le panic avec la trace d'appels et retourne une erreur 500.
 func RecoveryMiddleware() gin.HandlerFunc {
 	return gin.CustomRecovery(func(c *gin.Context, err any) {
 		log.Error().
@@ -89,8 +90,8 @@ func RecoveryMiddleware() gin.HandlerFunc {
 	})
 }
 
-// RequestIDMiddleware adds a unique request ID to each request.
-// The ID is added to the context and response headers.
+// RequestIDMiddleware ajoute un identifiant unique à chaque requête.
+// L'ID est ajouté au contexte et aux en-têtes de réponse.
 func RequestIDMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestID := c.GetHeader("X-Request-ID")
@@ -105,8 +106,8 @@ func RequestIDMiddleware() gin.HandlerFunc {
 	}
 }
 
-// CORSMiddleware returns a Gin middleware that handles CORS.
-// Configured to allow all origins for Cloudflare compatibility.
+// CORSMiddleware retourne un middleware Gin qui gère le CORS.
+// Configuré pour autoriser toutes les origines pour la compatibilité Cloudflare.
 func CORSMiddleware() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
@@ -118,7 +119,7 @@ func CORSMiddleware() gin.HandlerFunc {
 	})
 }
 
-// SetupMiddleware configures all middleware for the router
+// SetupMiddleware configure tous les middlewares pour le routeur.
 func SetupMiddleware(router *gin.Engine) {
 	router.Use(LoggerMiddleware())
 	router.Use(RecoveryMiddleware())

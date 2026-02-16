@@ -1,4 +1,4 @@
-// Package session provides session management and caching for Aurion sessions
+// Package session fournit la gestion des sessions et le caching pour les sessions Aurion
 package session
 
 import (
@@ -14,13 +14,13 @@ import (
 	"github.com/FRFlo/isen-ical-go/internal/storage"
 )
 
-// Service provides session management and caching operations
+// Service fournit les opérations de gestion des sessions et de caching
 type Service struct {
 	valkey *storage.ValkeyClient
 	config *config.Config
 }
 
-// NewService creates a new session service
+// NewService crée un nouveau service de session
 func NewService(valkey *storage.ValkeyClient, cfg *config.Config) *Service {
 	return &Service{
 		valkey: valkey,
@@ -28,13 +28,13 @@ func NewService(valkey *storage.ValkeyClient, cfg *config.Config) *Service {
 	}
 }
 
-// HashPassword hashes a password using SHA-256 and returns the first 16 characters
+// HashPassword hache un mot de passe avec SHA-256 et retourne les 16 premiers caractères
 func HashPassword(password string) string {
 	hash := sha256.Sum256([]byte(password))
 	return hex.EncodeToString(hash[:])[:16]
 }
 
-// GetSession retrieves stored cookies for a user session from Valkey
+// GetSession récupère les cookies stockés pour une session utilisateur depuis Valkey
 func (s *Service) GetSession(email, passwordHash string) ([]http.Cookie, error) {
 	key := storage.SessionKey(email, passwordHash)
 	data, err := s.valkey.Get(key)
@@ -50,7 +50,7 @@ func (s *Service) GetSession(email, passwordHash string) ([]http.Cookie, error) 
 	return cookies, nil
 }
 
-// SaveSession stores cookies for a user session in Valkey with TTL
+// SaveSession stocke les cookies pour une session utilisateur dans Valkey avec TTL
 func (s *Service) SaveSession(email, passwordHash string, cookies []http.Cookie) error {
 	key := storage.SessionKey(email, passwordHash)
 	data, err := json.Marshal(cookies)
@@ -66,7 +66,7 @@ func (s *Service) SaveSession(email, passwordHash string, cookies []http.Cookie)
 	return nil
 }
 
-// DeleteSession removes a user session from Valkey
+// DeleteSession supprime une session utilisateur de Valkey
 func (s *Service) DeleteSession(email, passwordHash string) error {
 	key := storage.SessionKey(email, passwordHash)
 	if err := s.valkey.Delete(key); err != nil {
@@ -75,7 +75,7 @@ func (s *Service) DeleteSession(email, passwordHash string) error {
 	return nil
 }
 
-// GetCachedEvents retrieves cached events from Valkey
+// GetCachedEvents récupère les événements en cache depuis Valkey
 func (s *Service) GetCachedEvents(key string) ([]models.AurionEvent, error) {
 	data, err := s.valkey.Get(key)
 	if err != nil {
@@ -90,7 +90,7 @@ func (s *Service) GetCachedEvents(key string) ([]models.AurionEvent, error) {
 	return events, nil
 }
 
-// CacheEvents stores events in Valkey with TTL
+// CacheEvents stocke les événements dans Valkey avec TTL
 func (s *Service) CacheEvents(key string, events []models.AurionEvent) error {
 	data, err := json.Marshal(events)
 	if err != nil {
@@ -105,10 +105,10 @@ func (s *Service) CacheEvents(key string, events []models.AurionEvent) error {
 	return nil
 }
 
-// AcquireLock attempts to acquire a distributed lock using SetNX
-// Returns true if the lock was acquired, false if it already exists
+// AcquireLock tente d'acquérir un verrou distribué avec SetNX
+// Retourne true si le verrou a été acquis, false s'il existe déjà
 func (s *Service) AcquireLock(key string) (bool, error) {
-	// Lock TTL is 60 seconds as specified
+	// Le TTL du verrou est de 60 secondes comme spécifié
 	ttl := 60 * time.Second
 	acquired, err := s.valkey.SetNX(key, "1", ttl)
 	if err != nil {
@@ -117,7 +117,7 @@ func (s *Service) AcquireLock(key string) (bool, error) {
 	return acquired, nil
 }
 
-// ReleaseLock releases a distributed lock
+// ReleaseLock libère un verrou distribué
 func (s *Service) ReleaseLock(key string) error {
 	if err := s.valkey.Delete(key); err != nil {
 		return fmt.Errorf("failed to release lock: %w", err)

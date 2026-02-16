@@ -1,4 +1,4 @@
-// Package template provides template rendering functionality using Go's html/template
+// Package template fournit la fonctionnalité de rendu de templates avec html/template de Go
 package template
 
 import (
@@ -6,8 +6,8 @@ import (
 	"html/template"
 )
 
-// Render executes a template with the provided data
-// The templateContent should be valid Go template syntax
+// Render exécute un template avec les données fournies
+// Le templateContent doit être une syntaxe de template Go valide
 func Render(templateContent string, data interface{}) (string, error) {
 	tmpl, err := template.New("page").Parse(templateContent)
 	if err != nil {

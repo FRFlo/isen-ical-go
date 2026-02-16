@@ -1,4 +1,4 @@
-// Package ical provides iCal generation functionality compliant with RFC 5545
+// Package ical fournit la génération de calendriers iCal conforme à la RFC 5545
 package ical
 
 import (
@@ -11,7 +11,7 @@ import (
 	"github.com/FRFlo/isen-ical-go/internal/models"
 )
 
-// GenerateICal generates an iCal calendar from a slice of AurionEvents
+// GenerateICal génère un calendrier iCal à partir d'une liste d'événements Aurion
 func GenerateICal(events []models.AurionEvent) string {
 	var lines []string
 
@@ -62,7 +62,7 @@ func GenerateICal(events []models.AurionEvent) string {
 	return strings.Join(foldedLines, "\r\n")
 }
 
-// generateVEvent generates a VEVENT component from an AurionEvent
+// generateVEvent génère un composant VEVENT à partir d'un événement Aurion
 func generateVEvent(event models.AurionEvent) []string {
 	location, additionalInfo, subject, courseType, professor := parseTitle(event.Title)
 
@@ -90,9 +90,9 @@ func generateVEvent(event models.AurionEvent) []string {
 	return lines
 }
 
-// parseTitle parses the 5-line Aurion title format
-// Format: "Location\nAdditionalInfo\nSubject\nCourseType\nProfessor"
-// All fields are optional and may be empty
+// parseTitle analyse le format de titre Aurion sur 5 lignes
+// Format : "Lieu\nInfoAdditionnelle\nMatière\nTypeCours\nProfesseur"
+// Tous les champs sont optionnels et peuvent être vides
 func parseTitle(title string) (location, additionalInfo, subject, courseType, professor string) {
 	parts := strings.Split(title, "\n")
 
@@ -108,7 +108,7 @@ func parseTitle(title string) (location, additionalInfo, subject, courseType, pr
 		strings.TrimSpace(parts[4])
 }
 
-// buildSummary builds the event summary with emoji prefix
+// buildSummary construit le résumé de l'événement avec un préfixe emoji
 func buildSummary(subject, courseType, location, additionalInfo string) string {
 	var summary string
 
@@ -137,7 +137,7 @@ func buildSummary(subject, courseType, location, additionalInfo string) string {
 	return normalizeSpaces(summary)
 }
 
-// buildDescription builds the event description
+// buildDescription construit la description de l'événement
 func buildDescription(additionalInfo, professor, courseType string) string {
 	var parts []string
 
@@ -157,8 +157,8 @@ func buildDescription(additionalInfo, professor, courseType string) string {
 	return strings.Join(parts, "\n")
 }
 
-// escapeText escapes special characters in iCal text values
-// RFC 5545 requires escaping of: backslash, comma, semicolon, newline
+// escapeText échappe les caractères spéciaux dans les valeurs texte iCal
+// La RFC 5545 exige l'échappement de : backslash, virgule, point-virgule, saut de ligne
 func escapeText(text string) string {
 	// Order matters: escape backslash first
 	text = strings.ReplaceAll(text, "\\", "\\\\")
@@ -168,8 +168,8 @@ func escapeText(text string) string {
 	return text
 }
 
-// foldLine folds a line at 75 bytes according to RFC 5545
-// Continuation lines start with a space
+// foldLine plie une ligne à 75 octets selon la RFC 5545
+// Les lignes de continuation commencent par un espace
 func foldLine(line string) string {
 	const maxLength = 75
 	const continuationLength = 74
@@ -215,12 +215,12 @@ func foldLine(line string) string {
 	return strings.Join(chunks, "\r\n ")
 }
 
-// formatDateUTC formats a time.Time as UTC iCal timestamp (YYYYMMDDTHHMMSSZ)
+// formatDateUTC formate un time.Time en horodatage iCal UTC (YYYYMMDDTHHMMSSZ)
 func formatDateUTC(t time.Time) string {
 	return t.UTC().Format("20060102T150405Z")
 }
 
-// parseDate parses a date string (timestamp or ISO format) into time.Time
+// parseDate analyse une chaîne de date (timestamp ou format ISO) en time.Time
 func parseDate(dateValue string) time.Time {
 	// Try parsing as Unix timestamp (milliseconds)
 	if ms, err := strconv.ParseInt(dateValue, 10, 64); err == nil {
@@ -236,7 +236,7 @@ func parseDate(dateValue string) time.Time {
 	return time.Now()
 }
 
-// normalizeSpaces normalizes whitespace in text
+// normalizeSpaces normalise les espaces blancs dans le texte
 func normalizeSpaces(text string) string {
 	// Replace multiple spaces/tabs with single space
 	fields := strings.Fields(text)

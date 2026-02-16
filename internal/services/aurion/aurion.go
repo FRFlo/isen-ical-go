@@ -1,3 +1,5 @@
+// Package aurion provides HTTP client functionality for communicating with the Aurion system.
+// It handles authentication, session management, and calendar data retrieval.
 package aurion
 
 import (
@@ -20,14 +22,16 @@ const (
 	contentType      = "application/x-www-form-urlencoded"
 )
 
-// Client handles HTTP communication with Aurion
+// Client handles HTTP communication with Aurion.
+// It maintains session state including cookies, ViewState, and various form IDs
+// required for navigating Aurion's JSF-based interface.
 type Client struct {
 	baseURL        string
 	httpClient     *http.Client
-	viewState      string
-	idInit         string
-	menuID         string
-	formIDPlanning string
+	viewState      string // JSF ViewState token for form submissions
+	idInit         string // Initialization ID for session state
+	menuID         string // Sidebar menu ID for "Mon Planning"
+	formIDPlanning string // Form ID for the planning page
 }
 
 // NewClient creates a new Aurion client

@@ -5,20 +5,21 @@ import (
 	"strings"
 )
 
-// Credentials represents the decoded email and password from Basic Auth
+// Credentials représente l'email et le mot de passe décodés de l'authentification Basic.
 type Credentials struct {
-	Email    string
-	Password string
+	Email    string // Email de l'utilisateur
+	Password string // Mot de passe de l'utilisateur
 }
 
-// AuthResult represents the result of parsing a Basic Auth header
+// AuthResult représente le résultat de l'analyse d'un en-tête Basic Auth.
 type AuthResult struct {
-	Success     bool
-	Credentials *Credentials
-	FailReason  string // "missing_header", "invalid_format", "decode_error"
+	Success     bool         // true si l'authentification est valide
+	Credentials *Credentials // Identifiants décodés (nil si échec)
+	FailReason  string       // "missing_header", "invalid_format", "decode_error"
 }
 
-// ParseBasicAuth parses an HTTP Basic Auth header and returns structured result
+// ParseBasicAuth analyse un en-tête HTTP Basic Auth et retourne un résultat structuré.
+// Gère les cas d'erreur courants avec des messages descriptifs.
 func ParseBasicAuth(header string) AuthResult {
 	// Check for empty header
 	if header == "" {

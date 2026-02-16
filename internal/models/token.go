@@ -1,9 +1,9 @@
-// Package models provides data structures for the application
+// Package models fournit les structures de données pour l'application.
 package models
 
 import "time"
 
-// StoredToken represents encrypted credentials stored in Valkey
+// StoredToken représente les identifiants chiffrés stockés dans Valkey.
 type StoredToken struct {
 	Encrypted []byte    `json:"encrypted"`
 	IV        []byte    `json:"iv"`
@@ -11,13 +11,13 @@ type StoredToken struct {
 	Email     string    `json:"email"`
 }
 
-// Credentials represents decrypted user credentials
+// Credentials représente les identifiants utilisateur déchiffrés.
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-// UserTokenEntry represents a single token entry in a user's token list
+// UserTokenEntry représente une entrée de token unique dans la liste des tokens d'un utilisateur.
 type UserTokenEntry struct {
 	Token     string    `json:"token"`
 	CreatedAt time.Time `json:"createdAt"`

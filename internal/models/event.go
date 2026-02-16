@@ -1,6 +1,9 @@
+// Package models fournit les structures de données pour l'application.
+// Ce package contient tous les modèles de domaine utilisés dans l'application.
 package models
 
-// AurionEvent represents a calendar event from Aurion
+// AurionEvent représente un événement de calendrier récupéré du système Aurion.
+// Il suit le format standard des événements calendaires avec les dates de début/fin et métadonnées.
 type AurionEvent struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`

@@ -1,4 +1,4 @@
-// Package handlers provides HTTP request handlers for the API endpoints
+// Package handlers fournit les gestionnaires de requêtes HTTP pour les endpoints de l'API.
 package handlers
 
 import (
@@ -27,7 +27,7 @@ var homepageTemplate string
 //go:embed privacy.gohtml
 var privacyTemplate string
 
-// Handlers holds all HTTP handlers with their dependencies
+// Handlers contient tous les gestionnaires HTTP avec leurs dépendances.
 type Handlers struct {
 	config     *config.Config
 	valkey     *storage.ValkeyClient
@@ -36,7 +36,7 @@ type Handlers struct {
 	aurionSvc  *aurion.Client
 }
 
-// New creates a new Handlers instance with all dependencies
+// New crée une nouvelle instance de Handlers avec toutes ses dépendances.
 func New(cfg *config.Config, valkey *storage.ValkeyClient) *Handlers {
 	return &Handlers{
 		config:     cfg,
@@ -47,6 +47,7 @@ func New(cfg *config.Config, valkey *storage.ValkeyClient) *Handlers {
 	}
 }
 
+// RegisterRoutes enregistre toutes les routes HTTP sur le moteur Gin.
 func (h *Handlers) RegisterRoutes(r *gin.Engine) {
 	r.GET("/", h.Home)
 	r.POST("/api/generate-token", h.GenerateToken)
@@ -55,6 +56,7 @@ func (h *Handlers) RegisterRoutes(r *gin.Engine) {
 	r.GET("/health", h.Health)
 }
 
+// Home gère la route racine et affiche soit la page d'accueil, soit le calendrier en fonction du header Accept.
 func (h *Handlers) Home(c *gin.Context) {
 	acceptHeader := c.GetHeader("Accept")
 
@@ -66,11 +68,12 @@ func (h *Handlers) Home(c *gin.Context) {
 	h.handleBasicAuthCalendar(c)
 }
 
-// HomepageData holds data for the homepage template
+// HomepageData contient les données pour le template de la page d'accueil.
 type HomepageData struct {
 	WebcalURL htmpl.URL
 }
 
+// serveHomepage sert la page d'accueil HTML avec le lien webcal://.
 func (h *Handlers) serveHomepage(c *gin.Context) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 
@@ -94,6 +97,7 @@ func (h *Handlers) serveHomepage(c *gin.Context) {
 	c.String(http.StatusOK, rendered)
 }
 
+// handleBasicAuthCalendar gère l'authentification basique et retourne le calendrier au format iCal.
 func (h *Handlers) handleBasicAuthCalendar(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	authResult := auth.ParseBasicAuth(authHeader)
@@ -133,17 +137,20 @@ func (h *Handlers) handleBasicAuthCalendar(c *gin.Context) {
 	c.String(http.StatusOK, icalData)
 }
 
+// GenerateTokenRequest représente la requête de génération de token.
 type GenerateTokenRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
 
+// GenerateTokenResponse représente la réponse de génération de token.
 type GenerateTokenResponse struct {
 	Token         string `json:"token"`
 	EncryptionKey string `json:"encryptionKey"`
 	URL           string `json:"url"`
 }
 
+// GenerateToken génère un nouveau token de calendrier pour l'utilisateur authentifié.
 func (h *Handlers) GenerateToken(c *gin.Context) {
 	var req GenerateTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -185,6 +192,7 @@ func (h *Handlers) GenerateToken(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// Calendar retourne le calendrier iCal associé au token fourni.
 func (h *Handlers) Calendar(c *gin.Context) {
 	tokenID := c.Param("token")
 	key := c.Query("key")
@@ -229,6 +237,7 @@ func (h *Handlers) Calendar(c *gin.Context) {
 	c.String(http.StatusOK, icalData)
 }
 
+// generateICal génère les données du calendrier iCal pour l'utilisateur donné avec mise en cache.
 func (h *Handlers) generateICal(email, password string) (string, error) {
 	passwordHash := session.HashPassword(password)
 
@@ -275,6 +284,7 @@ func (h *Handlers) generateICal(email, password string) (string, error) {
 	return ical.GenerateICal(events), nil
 }
 
+// Privacy sert la page de politique de confidentialité.
 func (h *Handlers) Privacy(c *gin.Context) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 
@@ -286,6 +296,7 @@ func (h *Handlers) Privacy(c *gin.Context) {
 	c.String(http.StatusOK, rendered)
 }
 
+// Health vérifie l'état de santé de l'application et retourne le statut.
 func (h *Handlers) Health(c *gin.Context) {
 	valkeyHealthy := true
 	if err := h.valkey.Ping(); err != nil {
