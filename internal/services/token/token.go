@@ -162,7 +162,11 @@ func (s *Service) addTokenToUserList(email, tokenID string) error {
 
 		for _, entry := range tokensToRemove {
 			tokenKey := storage.TokenKey(entry.Token)
-			s.valkey.Delete(tokenKey)
+			err := s.valkey.Delete(tokenKey)
+			if err != nil {
+				fmt.Printf("Warning: failed to delete old token %s: %v\n", entry.Token, err)
+				continue
+			}
 		}
 	}
 

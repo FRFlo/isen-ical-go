@@ -123,7 +123,12 @@ func main() {
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Échec de connexion à Valkey")
 			}
-			defer valkeyClient.Close()
+			defer func(valkeyClient *storage.ValkeyClient) {
+				err := valkeyClient.Close()
+				if err != nil {
+					logger.Error().Err(err).Msg("Échec de fermeture de Valkey")
+				}
+			}(valkeyClient)
 
 			// Configuration du routeur Gin avec les middlewares
 			router := gin.New()

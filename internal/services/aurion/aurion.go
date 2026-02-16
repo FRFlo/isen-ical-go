@@ -75,7 +75,12 @@ func (c *Client) Login(email, password string) error {
 	if err != nil {
 		return fmt.Errorf("login request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("failed to close response body: %v\n", err)
+		}
+	}(resp.Body)
 
 	if resp.StatusCode != http.StatusFound {
 		return fmt.Errorf("login failed, HTTP code %d", resp.StatusCode)
@@ -229,9 +234,9 @@ func (c *Client) GetPlanning(email, password string, startTimestamp, endTimestam
 
 // get performs a GET request
 func (c *Client) get(path, referer string) (string, error) {
-	url := c.baseURL + path
+	u := c.baseURL + path
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
 		return "", err
 	}
@@ -245,7 +250,12 @@ func (c *Client) get(path, referer string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("failed to close response body: %v\n", err)
+		}
+	}(resp.Body)
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -257,9 +267,9 @@ func (c *Client) get(path, referer string) (string, error) {
 
 // post performs a POST request
 func (c *Client) post(path, body, referer string) (string, error) {
-	url := c.baseURL + path
+	u := c.baseURL + path
 
-	req, err := http.NewRequest("POST", url, strings.NewReader(body))
+	req, err := http.NewRequest("POST", u, strings.NewReader(body))
 	if err != nil {
 		return "", err
 	}
@@ -274,7 +284,12 @@ func (c *Client) post(path, body, referer string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Printf("failed to close response body: %v\n", err)
+		}
+	}(resp.Body)
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -286,7 +301,7 @@ func (c *Client) post(path, body, referer string) (string, error) {
 
 // parseViewState extracts the ViewState value from HTML
 func parseViewState(html string) (string, error) {
-	re := regexp.MustCompile(`<input type="hidden" name="javax\.faces\.ViewState" id="j_id1:javax\.faces\.ViewState:0" value="([^"]+)" autocomplete="off" \/>`)
+	re := regexp.MustCompile(`<input type="hidden" name="javax\.faces\.ViewState" id="j_id1:javax\.faces\.ViewState:0" value="([^"]+)" autocomplete="off" />`)
 	matches := re.FindStringSubmatch(html)
 	if len(matches) < 2 {
 		return "", fmt.Errorf("ViewState not found")
@@ -311,7 +326,7 @@ func parseIdInit(html string) (string, error) {
 
 // parseSidebarMenuId finds the menu ID for 'Mon Planning'
 func parseSidebarMenuId(html string) (string, error) {
-	re := regexp.MustCompile(`onclick="[^"]*?PrimeFaces\.addSubmitParam\('form',\{'form:sidebar':'form:sidebar','form:sidebar_menuid':'(\d+)'\}[^"]*?"[^>]*?>[^<]*<span class="ui-menuitem-icon ui-icon fa fa-calendar-alt"><\/span><span class="ui-menuitem-text">Mon Planning<\/span>`)
+	re := regexp.MustCompile(`onclick="[^"]*?PrimeFaces\.addSubmitParam\('form',\{'form:sidebar':'form:sidebar','form:sidebar_menuid':'(\d+)'}[^"]*?"[^>]*?>[^<]*<span class="ui-menuitem-icon ui-icon fa fa-calendar-alt"></span><span class="ui-menuitem-text">Mon Planning</span>`)
 	matches := re.FindStringSubmatch(html)
 	if len(matches) < 2 {
 		return "", fmt.Errorf("sidebar menu id for Mon Planning not found")
@@ -331,7 +346,7 @@ func parseFormIdPlanning(html string) (string, error) {
 
 // parsePlanningData parses JSON events from the response
 func parsePlanningData(response string) ([]models.AurionEvent, error) {
-	re := regexp.MustCompile(`\[\{"id".*?\}\]`)
+	re := regexp.MustCompile(`\[\{"id".*?}]`)
 	matches := re.FindStringSubmatch(response)
 	if len(matches) < 1 {
 		return nil, fmt.Errorf("planning data not found in response")

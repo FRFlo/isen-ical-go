@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -88,22 +87,6 @@ func RecoveryMiddleware() gin.HandlerFunc {
 			"error": "Internal Server Error",
 		})
 	})
-}
-
-// RequestIDMiddleware ajoute un identifiant unique à chaque requête.
-// L'ID est ajouté au contexte et aux en-têtes de réponse.
-func RequestIDMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		requestID := c.GetHeader("X-Request-ID")
-		if requestID == "" {
-			requestID = uuid.New().String()
-		}
-
-		c.Set("requestID", requestID)
-		c.Header("X-Request-ID", requestID)
-
-		c.Next()
-	}
 }
 
 // CORSMiddleware retourne un middleware Gin qui gère le CORS.
