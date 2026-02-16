@@ -1,0 +1,30 @@
+services:
+  app:
+    image: ghcr.io/frflo/isen-ical-go:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - VALKEY_URL=redis://valkey:6379
+      - PORT=8080
+      - AURION_BASE_URL=https://aurion.junia.com
+      - MAX_TOKENS_PER_USER=3
+      - SESSION_TTL=3600
+      - CACHE_TTL=3600
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    depends_on:
+      - valkey
+    restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_data:/data
+    restart: unless-stopped
+
+volumes:
+  valkey_data:
