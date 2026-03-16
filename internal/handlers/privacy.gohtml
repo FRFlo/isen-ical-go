@@ -177,238 +177,115 @@
 <body>
 <div class="container">
     <h1>🔒 Confidentialité</h1>
-    <p class="subtitle">Transparence totale sur le traitement de vos données</p>
+    <p class="subtitle">Politique de confidentialité du port Go de isen-ical</p>
 
-    <h2>Vue d'ensemble</h2>
+    <h2>Périmètre de cette page</h2>
     <p>
-        Ce service est conçu avec la confidentialité comme priorité absolue. Le service propose
-        trois méthodes d'authentification, chacune avec des implications différentes en termes
-        de stockage de vos données.
+        Cette page décrit le comportement réel de ce service tel qu'il est implémenté dans
+        <strong>isen-ical-go</strong> (Gin + Valkey/Redis), et non celui du worker Cloudflare historique.
     </p>
 
     <div class="highlight">
-        <strong>Important :</strong> Vos mots de passe ne sont jamais stockés en clair.
-        Lorsqu'un stockage est nécessaire, ils sont chiffrés avec AES-GCM 256 bits avant
-        stockage et nécessitent une clé de chiffrement unique pour être déchiffrés.
+        <strong>Résumé :</strong> les mots de passe ne sont jamais stockés en clair. En mode token, ils sont
+        chiffrés avec AES-GCM 256 bits. En mode Basic Auth, ils sont utilisés en mémoire le temps de la requête.
     </div>
 
-    <h2>Schémas d'authentification et stockage</h2>
+    <h2>Modes d'accès et données traitées</h2>
 
-    <h3>1. HTTP Basic Authentication et URL webcal:// (iOS/macOS)</h3>
-    <p>
-        <strong>Aucun stockage de credentials côté serveur.</strong>
-    </p>
+    <h3>1. Basic Auth (route GET /)</h3>
     <ul>
-        <li><strong>HTTP Basic Authentication :</strong> Vos identifiants sont envoyés dans l'en-tête HTTP à chaque
-            requête. Idéal pour les scripts et outils en ligne de commande.
-        </li>
-        <li><strong>URL webcal:// (iOS/macOS) :</strong> Les identifiants sont gérés directement par votre application
-            Calendrier. Votre application envoie les identifiants à chaque synchronisation.
-        </li>
-        <li>Aucun stockage permanent de vos credentials sur nos serveurs</li>
-        <li>Les identifiants sont utilisés uniquement pour la durée de la requête</li>
+        <li>Les identifiants sont lus depuis l'en-tête <code>Authorization</code>.</li>
+        <li>Ils servent à se connecter à Aurion pour récupérer le planning et générer un ICS.</li>
+        <li>Le service peut stocker des <strong>cookies de session Aurion</strong> et un <strong>cache d'événements</strong> (voir plus bas).</li>
+        <li>Le mot de passe n'est pas stocké tel quel, mais son hash SHA-256 tronqué (16 hex) est utilisé dans certaines clés techniques.</li>
     </ul>
-    <div class="info-box">
-        <strong>Stockage temporaire uniquement :</strong> Seuls les cookies de session et
-        le cache des événements peuvent être stockés temporairement (voir sections ci-dessous).
-        Vos identifiants restent sur votre appareil et ne sont jamais stockés côté serveur.
-    </div>
 
-    <h3>2. Tokens sécurisés (Google Calendar et autres)</h3>
-    <p>
-        <strong>Stockage chiffré des credentials nécessaire.</strong>
-    </p>
+    <h3>2. Mode token (routes POST /api/generate-token puis GET /calendar/:token?key=...)</h3>
     <ul>
-        <li>Lorsque vous générez un token d'abonnement, vos identifiants sont chiffrés avant stockage</li>
-        <li>Le token permet d'accéder au calendrier sans réexposer vos identifiants dans l'URL</li>
-        <li>Nécessaire car certaines applications de calendrier ne supportent pas l'authentification Basic Auth</li>
+        <li>Lors de la génération du token, les identifiants sont chiffrés puis stockés.</li>
+        <li>La clé de chiffrement est renvoyée au client dans l'URL et <strong>n'est pas stockée côté serveur</strong>.</li>
+        <li>Le token permet de récupérer le calendrier sans renvoyer vos identifiants Aurion à chaque appel.</li>
     </ul>
-    <div class="info-box">
-        <strong>Avantage de sécurité :</strong> La clé de chiffrement n'est envoyée qu'une seule fois
-        au client lors de la génération du token et n'est jamais stockée sur le serveur.
-        <strong>Cela garantit que même en cas d'accès non autorisé aux données du serveur,
-            vos identifiants restent totalement protégés.</strong> Seul le client possédant la clé
-        peut déchiffrer les identifiants, renforçant ainsi la sécurité de vos données.
-    </div>
 
-    <h2>Données stockées</h2>
+    <h2>Données stockées dans Valkey (Redis)</h2>
 
-    <h3>1. Tokens et identifiants chiffrés (KV namespace: TOKENS)</h3>
-    <p>
-        <strong>Uniquement pour les tokens sécurisés (méthode 2).</strong> Lorsque vous générez
-        un token d'abonnement, vos identifiants sont chiffrés avant stockage :
-    </p>
+    <h3>1. Tokens chiffrés</h3>
     <ul>
-        <li><strong>Ce qui est stocké :</strong>
-            <ul>
-                <li>Token unique (UUID)</li>
-                <li>Identifiants chiffrés (email + mot de passe chiffrés avec AES-GCM)</li>
-                <li>Vecteur d'initialisation (IV) unique pour chaque chiffrement</li>
-                <li>Date de création du token</li>
-                <li>Email (non chiffré, utilisé uniquement pour l'organisation des tokens)</li>
-            </ul>
-        </li>
-        <li><strong>Clé de chiffrement :</strong> <strong>Jamais stockée sur le serveur.</strong> Elle est envoyée une
-            seule fois au client dans l'URL d'abonnement lors de la génération du token. Cette architecture garantit que
-            même en cas d'accès non autorisé aux données du serveur, vos identifiants restent protégés car la clé de
-            déchiffrement n'est pas présente sur le serveur.
-        </li>
-        <li><strong>Durée de vie :</strong> Pas d'expiration automatique, suppression lors de la rotation des tokens ou
-            manuellement
-        </li>
-        <li><strong>Limite :</strong> Maximum 3 tokens par utilisateur (configurable)</li>
+        <li>Clé <code>token:{uuid}</code> (sans TTL): credentials chiffrés, IV, date de création, email en clair.</li>
+        <li>Clé <code>user:{email}:tokens</code> (sans TTL): liste des tokens de l'utilisateur.</li>
+        <li>Rotation automatique: maximum <strong>3 tokens</strong> par utilisateur (constante actuelle du code).</li>
     </ul>
 
     <div class="code">
-        Structure stockée :<br>
-        token:{uuid} → { encrypted: "...", iv: "...", createdAt: timestamp, email: "..." }
+        token:{uuid} -> { encrypted, iv, createdAt, email }<br>
+        user:{email}:tokens -> [{ token, createdAt }, ...]
     </div>
 
-    <h3>2. Cache des événements (KV namespace: CACHE)</h3>
-    <p>
-        <strong>Pour toutes les méthodes d'authentification.</strong> Les données du planning
-        sont mises en cache pour améliorer les performances et réduire les appels à Aurion :
-    </p>
+    <h3>2. Sessions Aurion</h3>
     <ul>
-        <li><strong>Ce qui est stocké :</strong>
-            <ul>
-                <li>Événements du planning (titres, dates, lieux, descriptions)</li>
-                <li>Période couverte par le cache</li>
-            </ul>
-        </li>
-        <li><strong>Clé de cache :</strong> Basée sur un hash SHA-256 des credentials et la période demandée</li>
-        <li><strong>Durée de vie :</strong> 1 heure (3600 secondes)</li>
-        <li><strong>Isolation :</strong> Chaque utilisateur a sa propre clé de cache</li>
-        <li><strong>Déduplication :</strong> Un système de verrous empêche les requêtes simultanées pour les mêmes
-            données
-        </li>
+        <li>Clé <code>session:{email}:{hash16}</code> avec TTL (par défaut 3600 s).</li>
+        <li>Contient les cookies de session Aurion (pas le mot de passe en clair).</li>
     </ul>
 
-    <div class="code">
-        Clé de cache : events:user:{email}:{hashSHA256}:{startTimestamp}:{endTimestamp}<br>
-        Contenu : JSON array des événements Aurion
-    </div>
-
-    <div class="info-box">
-        <strong>Pourquoi le cache ?</strong> Le cache réduit la charge sur les serveurs Aurion
-        et améliore la rapidité de réponse. Les données sont automatiquement rafraîchies après
-        expiration du cache. Le système de déduplication empêche plusieurs requêtes simultanées
-        pour les mêmes données, optimisant encore davantage les performances.
-    </div>
-
-    <h3>3. Sessions Aurion (KV namespace: SESSIONS)</h3>
-    <p>
-        <strong>Pour toutes les méthodes d'authentification.</strong> Les cookies de session
-        sont stockés pour éviter les reconnexions fréquentes :
-    </p>
+    <h3>3. Cache d'événements</h3>
     <ul>
-        <li><strong>Ce qui est stocké :</strong>
-            <ul>
-                <li>Cookies de session Aurion (identifiants de session uniquement)</li>
-                <li>Aucune information d'authentification</li>
-            </ul>
-        </li>
-        <li><strong>Clé de session :</strong> Basée sur un hash SHA-256 des credentials</li>
-        <li><strong>Durée de vie :</strong> 1 heure (3600 secondes)</li>
-        <li><strong>Isolation :</strong> Chaque utilisateur a sa propre session</li>
+        <li>Clé <code>events:user:{email}:{hash16}:{start}:{end}</code> avec TTL (par défaut 3600 s).</li>
+        <li>Contient les événements Aurion sérialisés en JSON.</li>
     </ul>
 
-    <div class="code">
-        Clé de session : user:{email}:{hashSHA256}<br>
-        Contenu : JSON object avec les cookies de session (format: { cookies: {...}, createdAt: timestamp })
-    </div>
+    <h3>4. Verrous de déduplication</h3>
+    <ul>
+        <li>Clé <code>lock:user:{email}:{hash16}:{start}:{end}</code> avec TTL 60 s.</li>
+        <li>Permet d'éviter plusieurs récupérations simultanées du même planning.</li>
+    </ul>
 
     <div class="warning-box">
-        <strong>Note importante :</strong> Les sessions expirent automatiquement après 1 heure.
-        En cas d'expiration, une nouvelle connexion est établie automatiquement de manière transparente.
+        <strong>Important :</strong> le hash de mot de passe utilisé dans les clés techniques est tronqué à 16 caractères
+        hexadécimaux. Il sert à l'isolation logique des clés, pas à une authentification utilisateur.
     </div>
 
-    <h2>Chiffrement</h2>
-
-    <h3>Algorithme : AES-GCM 256 bits</h3>
-    <p>
-        Tous les identifiants sont chiffrés avec l'algorithme AES-GCM (Advanced Encryption Standard
-        en mode Galois/Counter Mode) avec une clé de 256 bits :
-    </p>
+    <h2>Chiffrement des identifiants (mode token)</h2>
     <ul>
-        <li><strong>Force :</strong> Standard de chiffrement militaire, considéré comme inviolable</li>
-        <li><strong>Mode GCM :</strong> Fournit à la fois le chiffrement et l'authentification</li>
-        <li><strong>IV unique :</strong> Chaque chiffrement utilise un vecteur d'initialisation unique (12 bytes)</li>
-        <li><strong>Clé unique :</strong> Chaque token a sa propre clé de chiffrement générée aléatoirement</li>
+        <li>Algorithme: AES-GCM avec clé de 32 octets (256 bits).</li>
+        <li>IV aléatoire généré à chaque chiffrement.</li>
+        <li>La clé est encodée en Base64URL et renvoyée au client uniquement.</li>
+        <li>Sans cette clé, le serveur ne peut pas déchiffrer les credentials stockés.</li>
     </ul>
 
-    <h3>Processus de chiffrement</h3>
-    <ol>
-        <li>Génération d'une clé de chiffrement aléatoire (32 bytes)</li>
-        <li>Génération d'un IV unique (12 bytes)</li>
-        <li>Chiffrement des credentials (email + mot de passe) avec AES-GCM</li>
-        <li>Encodage Base64URL des données chiffrées</li>
-        <li>Stockage du token, des données chiffrées et de l'IV dans KV</li>
-        <li>La clé de chiffrement est envoyée une seule fois au client dans l'URL d'abonnement et <strong>jamais stockée
-            sur le serveur</strong></li>
-    </ol>
-
-    <div class="highlight">
-        <strong>Sécurité renforcée :</strong> La clé de chiffrement n'est jamais stockée sur le serveur.
-        Elle est transmise une seule fois au client lors de la génération du token.
-        <strong>Cette architecture garantit que même en cas d'accès non autorisé aux données du serveur,
-            vos identifiants restent totalement protégés.</strong> Seul le client possédant la clé peut
-        déchiffrer les identifiants, ce qui renforce considérablement la sécurité de vos données
-        sensibles.
-    </div>
-
-    <h2>Isolation des données</h2>
-    <p>
-        Chaque utilisateur est complètement isolé des autres :
-    </p>
+    <h2>Journalisation et données techniques</h2>
     <ul>
-        <li><strong>Tokens :</strong> Liste séparée par utilisateur (clé : user:{email}:tokens)</li>
-        <li><strong>Cache :</strong> Clé unique basée sur le hash SHA-256 des credentials de l'utilisateur</li>
-        <li><strong>Sessions :</strong> Clé unique basée sur le hash SHA-256 des credentials de l'utilisateur</li>
-        <li><strong>Verrous de requête :</strong> Verrous temporaires pour dédupliquer les requêtes simultanées (clé :
-            lock:{userKey}:{start}:{end})
-        </li>
+        <li>Le middleware de logs enregistre: méthode, chemin, statut, latence, IP client, user-agent.</li>
+        <li>Si présents, les query params, params de route et erreurs applicatives sont aussi journalisés.</li>
+        <li>Conséquence pratique: le paramètre <code>key</code> des URLs <code>/calendar/:token?key=...</code> peut apparaître dans les logs HTTP.</li>
+        <li>Le service ajoute/relaye des en-têtes techniques de corrélation: <code>x-request-id</code>, <code>x-trace-id</code>, <code>traceparent</code>.</li>
     </ul>
 
+    <h3>Route /api/track</h3>
     <p>
-        Il est impossible pour un utilisateur d'accéder aux données d'un autre utilisateur, même
-        en connaissant son email, car les clés incluent un hash SHA-256 des credentials complets.
-        L'utilisation de SHA-256 garantit l'unicité des clés et prévient les collisions de hachage.
+        La route <code>POST /api/track</code> valide un payload JSON et renvoie <code>202</code> pour les événements
+        commençant par <code>frontend_</code>. Dans l'état actuel du port Go, elle ne transmet pas ces événements à un service
+        externe d'analytics.
     </p>
 
-    <h2>Durée de conservation</h2>
+    <h2>Durées de conservation</h2>
     <ul>
-        <li><strong>Tokens :</strong> Conservés jusqu'à suppression manuelle ou rotation automatique</li>
-        <li><strong>Cache :</strong> 1 heure maximum, puis suppression automatique</li>
-        <li><strong>Sessions :</strong> 1 heure maximum, puis expiration automatique</li>
+        <li><strong>Tokens:</strong> pas d'expiration TTL automatique; suppression lors de la rotation (au-delà de 3 tokens) ou suppression manuelle en base.</li>
+        <li><strong>Sessions Aurion:</strong> TTL configurable (<code>SESSION_TTL</code>, 3600 s par défaut).</li>
+        <li><strong>Cache événements:</strong> TTL configurable (<code>CACHE_TTL</code>, 3600 s par défaut).</li>
+        <li><strong>Verrous:</strong> 60 secondes.</li>
     </ul>
 
-    <h2>Accès aux données</h2>
-    <p>
-        Les données sont stockées dans Cloudflare KV, une base de données distribuée :
-    </p>
+    <h2>Ce que ce service ne fait pas (dans sa version actuelle)</h2>
     <ul>
-        <li><strong>Localisation :</strong> Données répliquées dans plusieurs centres de données Cloudflare</li>
-        <li><strong>Accès :</strong> Uniquement via l'API Cloudflare Workers (pas d'accès direct)</li>
-        <li><strong>Sécurité :</strong> Chiffrement au repos et en transit</li>
-    </ul>
-
-    <h2>Vos droits</h2>
-    <p>
-        Vous avez le contrôle total sur vos données :
-    </p>
-    <ul>
-        <li><strong>Suppression :</strong> Les tokens peuvent être supprimés en ne les utilisant plus (rotation
-            automatique après 3 tokens)
-        </li>
-        <li><strong>Transparence :</strong> Ce document détaille exactement ce qui est stocké et comment</li>
-        <li><strong>Code source :</strong> Le code est open source et disponible sur GitHub</li>
+        <li>Pas de base utilisateur locale, pas de création de compte, pas de profil.</li>
+        <li>Pas de stockage de mot de passe en clair.</li>
+        <li>Pas d'intégration active avec un service tiers d'analytics depuis <code>/api/track</code>.</li>
     </ul>
 
     <h2>Contact</h2>
     <p>
-        Pour toute question concernant la confidentialité ou le traitement de vos données,
-        vous pouvez consulter le code source sur GitHub ou ouvrir une issue.
+        Pour vérifier ces informations, vous pouvez consulter le code source ou ouvrir une issue
+        sur le dépôt GitHub du projet.
     </p>
 
     <footer class="footer">
