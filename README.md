@@ -8,7 +8,8 @@ A Go-based web service that converts ISEN Aurion planning data into iCal format,
 - **iCal Format Export**: Standard iCalendar format supported by all major calendar applications
 - **AES-256-GCM Encryption**: Credentials are encrypted before storage with client-side keys
 - **Valkey Caching**: Efficient caching of planning data to reduce load on Aurion servers
-- **Rate Limiting & Concurrency Control**: Distributed locks prevent duplicate requests
+- **Concurrency Control**: Distributed locks prevent duplicate planning fetches
+- **Worker-Compatible Contract**: Compatibility routes and trace headers align with the original Worker behavior
 - **Docker Support**: Easy deployment with Docker and docker-compose
 - **Health Monitoring**: Built-in health check endpoint for monitoring
 - **Privacy First**: No data sharing with third parties, transparent privacy policy
@@ -90,10 +91,12 @@ Generates a secure token for calendar access.
 **Request Body:**
 ```json
 {
-  "email": "prenom.nom@student.junia.com",
+  "username": "prenom.nom@student.junia.com",
   "password": "votre_mot_de_passe"
 }
 ```
+
+`email` is also accepted for backward compatibility if `username` is not provided.
 
 **Response:**
 ```json
@@ -106,7 +109,7 @@ Generates a secure token for calendar access.
 
 **Error Responses:**
 - `400 Bad Request` - Invalid request format
-- `401 Unauthorized` - Invalid credentials
+- `403 Forbidden` - Invalid credentials
 
 #### Access Calendar
 ```
@@ -142,6 +145,37 @@ GET /privacy
 
 Returns the privacy policy page in HTML format.
 
+#### Frontend Tracking
+```
+POST /api/track
+```
+
+Accepts frontend telemetry payloads and validates the event name.
+
+**Request Body:**
+```json
+{
+  "event": "frontend_page_view",
+  "distinctId": "visitor-123",
+  "properties": {
+    "path": "/"
+  }
+}
+```
+
+**Behavior:**
+- Returns `202 Accepted` for events prefixed with `frontend_`
+- Returns `400 Bad Request` for invalid payloads or event names
+- Returns `415 Unsupported Media Type` when `Content-Type` is not JSON
+
+#### Compatibility Routes
+```
+GET /favicon.ico
+GET /.well-known/appspecific/com.chrome.devtools.json
+```
+
+Both routes return `204 No Content` for client compatibility.
+
 ## Environment Variables
 
 | Variable              | Description                               | Default                    | Required |
@@ -158,14 +192,14 @@ Returns the privacy policy page in HTML format.
 ### Valkey URL Format
 
 ```
-valkey://[:password@]host[:port][/db]
-valkeys://[:password@]host[:port][/db]  # TLS enabled
+redis://[:password@]host[:port][/db]
+rediss://[:password@]host[:port][/db]  # TLS enabled
 ```
 
 Examples:
-- `valkey://localhost:6379`
-- `valkey://:mypassword@valkey.example.com:6379/0`
-- `valkeys://secure.valkey.com:6380`
+- `redis://localhost:6379`
+- `redis://:mypassword@valkey.example.com:6379/0`
+- `rediss://secure.valkey.com:6380`
 
 ### Encryption Key
 
@@ -278,8 +312,8 @@ curl -H "Authorization: Basic $credentials" \
 2. **Key Management**: Encryption keys are never stored server-side; they are provided by the client in the URL
 3. **Token Limits**: Each user can have maximum 3 active tokens (configurable)
 4. **HTTPS Required**: Always use HTTPS in production to protect tokens in URLs
-5. **No Credential Logging**: Credentials are never logged or stored in plain text
-6. **Rate Limiting**: Distributed locks prevent abuse and protect Aurion servers
+5. **Credential Logging Scope**: Passwords are not logged in plain text, but URL query parameters may be logged (including `key` on `/calendar/:token?key=...`)
+6. **Concurrency Locks**: Distributed locks deduplicate simultaneous fetches for the same planning window
 
 ## Development
 
