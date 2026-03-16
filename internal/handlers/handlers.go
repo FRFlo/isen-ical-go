@@ -4,6 +4,7 @@ package handlers
 import (
 	_ "embed"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	htmpl "html/template"
 	"net/http"
@@ -50,9 +51,12 @@ func New(cfg *config.Config, valkey *storage.ValkeyClient) *Handlers {
 // RegisterRoutes enregistre toutes les routes HTTP sur le moteur Gin.
 func (h *Handlers) RegisterRoutes(r *gin.Engine) {
 	r.GET("/", h.Home)
+	r.POST("/api/track", h.Track)
 	r.POST("/api/generate-token", h.GenerateToken)
 	r.GET("/calendar/:token", h.Calendar)
 	r.GET("/privacy", h.Privacy)
+	r.GET("/favicon.ico", h.Favicon)
+	r.GET("/.well-known/appspecific/com.chrome.devtools.json", h.ChromeDevtoolsProbe)
 	r.GET("/health", h.Health)
 }
 
@@ -105,14 +109,17 @@ func (h *Handlers) handleBasicAuthCalendar(c *gin.Context) {
 	if !authResult.Success {
 		switch authResult.FailReason {
 		case "missing_header":
-			c.Header("WWW-Authenticate", `Basic realm="ISEN iCal"`)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+			c.Header("WWW-Authenticate", `Basic realm="Identifiants Aurion"`)
+			c.String(http.StatusUnauthorized, "Authorization required")
 		case "invalid_format":
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid authorization format"})
+			c.Header("WWW-Authenticate", `Basic realm="Identifiants Aurion"`)
+			c.String(http.StatusUnauthorized, "Invalid authorization format")
 		case "decode_error":
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to decode credentials"})
+			c.Header("WWW-Authenticate", `Basic realm="Identifiants Aurion"`)
+			c.String(http.StatusUnauthorized, "Invalid authorization format")
 		default:
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Authentication failed"})
+			c.Header("WWW-Authenticate", `Basic realm="Identifiants Aurion"`)
+			c.String(http.StatusUnauthorized, "Invalid authorization format")
 		}
 		return
 	}
@@ -120,26 +127,26 @@ func (h *Handlers) handleBasicAuthCalendar(c *gin.Context) {
 	creds := authResult.Credentials
 
 	if err := h.aurionSvc.Login(creds.Email, creds.Password); err != nil {
-		c.Header("WWW-Authenticate", `Basic realm="ISEN iCal"`)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.String(http.StatusForbidden, "Invalid credentials")
 		return
 	}
 
 	// Generate iCal
 	icalData, err := h.generateICal(creds.Email, creds.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate calendar"})
+		c.String(http.StatusInternalServerError, "Error fetching schedule: "+err.Error())
 		return
 	}
 
 	c.Header("Content-Type", "text/calendar; charset=utf-8")
-	c.Header("Content-Disposition", "inline; filename=calendar.ics")
+	c.Header("Content-Disposition", `attachment; filename="isen-ical.ics"`)
 	c.String(http.StatusOK, icalData)
 }
 
 // GenerateTokenRequest représente la requête de génération de token.
 type GenerateTokenRequest struct {
-	Email    string `json:"email" binding:"required,email"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -158,12 +165,21 @@ func (h *Handlers) GenerateToken(c *gin.Context) {
 		return
 	}
 
-	if err := h.aurionSvc.Login(req.Email, req.Password); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+	username := strings.TrimSpace(req.Username)
+	if username == "" {
+		username = strings.TrimSpace(req.Email)
+	}
+	if username == "" || req.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Username and password are required"})
 		return
 	}
 
-	tokenID, key, _, err := h.tokenSvc.GenerateToken(req.Email, req.Password)
+	if err := h.aurionSvc.Login(username, req.Password); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	tokenID, key, _, err := h.tokenSvc.GenerateToken(username, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
@@ -228,13 +244,57 @@ func (h *Handlers) Calendar(c *gin.Context) {
 	// Generate iCal
 	icalData, err := h.generateICal(creds.Email, creds.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate calendar"})
+		if strings.Contains(err.Error(), "Login failed") || strings.Contains(err.Error(), "No session cookie") {
+			c.String(http.StatusForbidden, "Invalid credentials")
+			return
+		}
+		c.String(http.StatusInternalServerError, "Error fetching schedule: "+err.Error())
 		return
 	}
 
 	c.Header("Content-Type", "text/calendar; charset=utf-8")
-	c.Header("Content-Disposition", "inline; filename=calendar.ics")
+	c.Header("Content-Disposition", `attachment; filename="isen-ical.ics"`)
 	c.String(http.StatusOK, icalData)
+}
+
+type TrackRequest struct {
+	Event      string                 `json:"event"`
+	DistinctID string                 `json:"distinctId"`
+	Properties map[string]interface{} `json:"properties"`
+}
+
+// Track gère les événements de télémétrie frontend.
+func (h *Handlers) Track(c *gin.Context) {
+	if !strings.Contains(strings.ToLower(c.GetHeader("Content-Type")), "application/json") {
+		c.JSON(http.StatusUnsupportedMediaType, gin.H{"error": "Content-Type must be application/json"})
+		return
+	}
+
+	var req TrackRequest
+	decoder := json.NewDecoder(c.Request.Body)
+	if err := decoder.Decode(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid tracking payload"})
+		return
+	}
+
+	if !strings.HasPrefix(req.Event, "frontend_") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Event name is invalid"})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{"ok": true})
+}
+
+// Favicon retourne une réponse vide pour compatibilité Worker.
+func (h *Handlers) Favicon(c *gin.Context) {
+	c.Header("Cache-Control", "public, max-age=3600")
+	c.Status(http.StatusNoContent)
+}
+
+// ChromeDevtoolsProbe retourne une réponse vide pour la sonde Chrome devtools.
+func (h *Handlers) ChromeDevtoolsProbe(c *gin.Context) {
+	c.Header("Cache-Control", "no-store")
+	c.Status(http.StatusNoContent)
 }
 
 // generateICal génère les données du calendrier iCal pour l'utilisateur donné avec mise en cache.

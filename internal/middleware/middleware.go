@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -8,6 +10,42 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
+
+func randomHex(byteLen int) string {
+	b := make([]byte, byteLen)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
+func buildTraceparent(traceID, spanID string) string {
+	return fmt.Sprintf("00-%s-%s-01", traceID, spanID)
+}
+
+// TraceHeadersMiddleware ajoute les en-têtes de corrélation compatibles Worker.
+func TraceHeadersMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		requestID := c.GetHeader("x-request-id")
+		if requestID == "" {
+			requestID = randomHex(16)
+		}
+
+		traceID := c.GetHeader("x-trace-id")
+		if traceID == "" {
+			traceID = randomHex(16)
+		}
+
+		traceparent := c.GetHeader("traceparent")
+		if traceparent == "" {
+			traceparent = buildTraceparent(traceID, randomHex(8))
+		}
+
+		c.Header("x-request-id", requestID)
+		c.Header("x-trace-id", traceID)
+		c.Header("traceparent", traceparent)
+
+		c.Next()
+	}
+}
 
 // LoggerMiddleware retourne un middleware Gin qui journalise les requêtes HTTP avec zerolog.
 // Il enregistre la méthode, le chemin, le statut, la latence, l'IP client, le user agent,
@@ -104,6 +142,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
 // SetupMiddleware configure tous les middlewares pour le routeur.
 func SetupMiddleware(router *gin.Engine) {
+	router.Use(TraceHeadersMiddleware())
 	router.Use(LoggerMiddleware())
 	router.Use(RecoveryMiddleware())
 	router.Use(CORSMiddleware())
