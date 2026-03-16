@@ -21,26 +21,8 @@ func GenerateICal(events []models.AurionEvent) string {
 	lines = append(lines, "PRODID:-//ISEN-ICAL//isen-ical//EN")
 	lines = append(lines, "CALSCALE:GREGORIAN")
 	lines = append(lines, "METHOD:PUBLISH")
+	lines = append(lines, "X-WR-CALNAME:Aurion")
 	lines = append(lines, "X-WR-TIMEZONE:Europe/Paris")
-
-	// VTIMEZONE definition for Europe/Paris
-	lines = append(lines, "BEGIN:VTIMEZONE")
-	lines = append(lines, "TZID:Europe/Paris")
-	lines = append(lines, "BEGIN:DAYLIGHT")
-	lines = append(lines, "TZOFFSETFROM:+0100")
-	lines = append(lines, "TZOFFSETTO:+0200")
-	lines = append(lines, "TZNAME:CEST")
-	lines = append(lines, "DTSTART:19700329T020000")
-	lines = append(lines, "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU")
-	lines = append(lines, "END:DAYLIGHT")
-	lines = append(lines, "BEGIN:STANDARD")
-	lines = append(lines, "TZOFFSETFROM:+0200")
-	lines = append(lines, "TZOFFSETTO:+0100")
-	lines = append(lines, "TZNAME:CET")
-	lines = append(lines, "DTSTART:19701025T030000")
-	lines = append(lines, "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU")
-	lines = append(lines, "END:STANDARD")
-	lines = append(lines, "END:VTIMEZONE")
 
 	// Generate VEVENT for each event
 	for _, event := range events {

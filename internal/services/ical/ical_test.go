@@ -39,19 +39,14 @@ func TestGenerateICal_ValidStructure(t *testing.T) {
 	if !strings.Contains(result, "METHOD:PUBLISH") {
 		t.Error("Missing METHOD:PUBLISH")
 	}
+	if !strings.Contains(result, "X-WR-CALNAME:Aurion") {
+		t.Error("Missing X-WR-CALNAME:Aurion")
+	}
 	if !strings.Contains(result, "X-WR-TIMEZONE:Europe/Paris") {
 		t.Error("Missing X-WR-TIMEZONE")
 	}
-
-	// Check VTIMEZONE
-	if !strings.Contains(result, "BEGIN:VTIMEZONE") {
-		t.Error("Missing BEGIN:VTIMEZONE")
-	}
-	if !strings.Contains(result, "END:VTIMEZONE") {
-		t.Error("Missing END:VTIMEZONE")
-	}
-	if !strings.Contains(result, "TZID:Europe/Paris") {
-		t.Error("Missing TZID:Europe/Paris")
+	if strings.Contains(result, "BEGIN:VTIMEZONE") {
+		t.Error("VTIMEZONE should not be present")
 	}
 
 	// Check VEVENT
