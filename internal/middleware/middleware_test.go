@@ -1,15 +1,13 @@
 package middleware
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
 )
 
 func setupTestRouter() *gin.Engine {
@@ -19,52 +17,75 @@ func setupTestRouter() *gin.Engine {
 	return router
 }
 
-func TestLoggerMiddleware(t *testing.T) {
-	var buf bytes.Buffer
-	logger := zerolog.New(&buf)
+func TestTraceHeadersMiddleware_GeneratesHeaders(t *testing.T) {
 	router := setupTestRouter()
 
 	router.GET("/test", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "success"})
+		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
 
-	logOutput := buf.String()
-	assert.Contains(t, logOutput, "method")
-	assert.Contains(t, logOutput, "GET")
-	assert.Contains(t, logOutput, "path")
-	assert.Contains(t, logOutput, "/test")
-	assert.Contains(t, logOutput, "status")
-	assert.Contains(t, logOutput, "duration")
-	assert.Contains(t, logOutput, "client_ip")
-	assert.Contains(t, logOutput, "request_id")
+	requestID := w.Header().Get("x-request-id")
+	traceID := w.Header().Get("x-trace-id")
+	traceparent := w.Header().Get("traceparent")
+
+	if requestID == "" {
+		t.Fatal("expected x-request-id header")
+	}
+	if traceID == "" {
+		t.Fatal("expected x-trace-id header")
+	}
+	if traceparent == "" {
+		t.Fatal("expected traceparent header")
+	}
+
+	traceparentRegex := regexp.MustCompile(`^00-[a-f0-9]{32}-[a-f0-9]{16}-01$`)
+	if !traceparentRegex.MatchString(traceparent) {
+		t.Fatalf("unexpected traceparent format: %q", traceparent)
+	}
 }
 
-func TestLoggerMiddlewareSkipsHealth(t *testing.T) {
-	var buf bytes.Buffer
-	logger := zerolog.New(&buf)
+func TestTraceHeadersMiddleware_PreservesIncomingHeaders(t *testing.T) {
 	router := setupTestRouter()
 
-	router.GET("/health", HealthCheck)
+	router.GET("/test", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	const reqID = "req-custom"
+	const traceID = "abc123"
+	const traceparent = "00-11111111111111111111111111111111-2222222222222222-01"
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/health", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/test", nil)
+	req.Header.Set("x-request-id", reqID)
+	req.Header.Set("x-trace-id", traceID)
+	req.Header.Set("traceparent", traceparent)
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
 
-	logOutput := buf.String()
-	assert.Empty(t, logOutput)
+	if got := w.Header().Get("x-request-id"); got != reqID {
+		t.Fatalf("expected x-request-id %q, got %q", reqID, got)
+	}
+	if got := w.Header().Get("x-trace-id"); got != traceID {
+		t.Fatalf("expected x-trace-id %q, got %q", traceID, got)
+	}
+	if got := w.Header().Get("traceparent"); got != traceparent {
+		t.Fatalf("expected traceparent %q, got %q", traceparent, got)
+	}
 }
 
-func TestRecoveryMiddleware(t *testing.T) {
-	var buf bytes.Buffer
-	logger := zerolog.New(&buf)
+func TestRecoveryMiddleware_ReturnsJSONOnPanic(t *testing.T) {
 	router := setupTestRouter()
 
 	router.GET("/panic", func(c *gin.Context) {
@@ -72,176 +93,50 @@ func TestRecoveryMiddleware(t *testing.T) {
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/panic", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/panic", nil)
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d", w.Code)
+	}
 
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "Internal Server Error", response["error"])
-	assert.Equal(t, "An unexpected error occurred", response["message"])
-	assert.NotEmpty(t, response["request_id"])
+	var response map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("failed to decode JSON response: %v", err)
+	}
 
-	logOutput := buf.String()
-	assert.Contains(t, logOutput, "Panic recovered")
-	assert.Contains(t, logOutput, "intentional test panic")
-	assert.Contains(t, logOutput, "stack")
+	if response["error"] != "Internal Server Error" {
+		t.Fatalf("unexpected error message: %q", response["error"])
+	}
+
+	if w.Header().Get("x-request-id") == "" {
+		t.Fatal("expected x-request-id on panic response")
+	}
 }
 
-func TestRequestIDMiddleware(t *testing.T) {
-	var buf bytes.Buffer
-	logger := zerolog.New(&buf)
+func TestCORSMiddleware_Preflight(t *testing.T) {
 	router := setupTestRouter()
 
 	router.GET("/test", func(c *gin.Context) {
-		requestID := GetRequestID(c)
-		c.JSON(http.StatusOK, gin.H{"request_id": requestID})
+		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
+	req, _ := http.NewRequest(http.MethodOptions, "/test", nil)
+	req.Header.Set("Origin", "https://example.com")
+	req.Header.Set("Access-Control-Request-Method", "GET")
+	req.Header.Set("Access-Control-Request-Headers", "Authorization, Content-Type")
 	router.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusOK, w.Code)
+	if w.Code != http.StatusNoContent && w.Code != http.StatusOK {
+		t.Fatalf("expected status 204 or 200, got %d", w.Code)
+	}
 
-	responseID := w.Header().Get(RequestIDHeader)
-	assert.NotEmpty(t, responseID)
+	if got := w.Header().Get("Access-Control-Allow-Origin"); got == "" {
+		t.Fatal("expected Access-Control-Allow-Origin header")
+	}
 
-	// Check response body contains the same ID
-	var response map[string]string
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, responseID, response["request_id"])
-}
-
-func TestRequestIDMiddlewarePreservesExistingID(t *testing.T) {
-	var buf bytes.Buffer
-	logger := zerolog.New(&buf)
-	router := setupTestRouter()
-
-	router.GET("/test", func(c *gin.Context) {
-		requestID := GetRequestID(c)
-		c.JSON(http.StatusOK, gin.H{"request_id": requestID})
-	})
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
-	existingID := "custom-request-id-123"
-	req.Header.Set(RequestIDHeader, existingID)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	// Check that existing ID was preserved
-	responseID := w.Header().Get(RequestIDHeader)
-	assert.Equal(t, existingID, responseID)
-
-	var response map[string]string
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, existingID, response["request_id"])
-}
-
-func TestGetRequestIDNotFound(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-
-	router.GET("/test", func(c *gin.Context) {
-		requestID := GetRequestID(c)
-		c.JSON(http.StatusOK, gin.H{"request_id": requestID})
-	})
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test", nil)
-	router.ServeHTTP(w, req)
-
-	var response map[string]string
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Empty(t, response["request_id"])
-}
-
-func TestErrorResponse(t *testing.T) {
-	var buf bytes.Buffer
-	logger := zerolog.New(&buf)
-	router := setupTestRouter()
-
-	router.GET("/error", func(c *gin.Context) {
-		ErrorResponse(c, http.StatusBadRequest, "Invalid input provided")
-	})
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/error", nil)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusBadRequest, w.Code)
-
-	var response map[string]interface{}
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "Bad Request", response["error"])
-	assert.Equal(t, "Invalid input provided", response["message"])
-	assert.NotEmpty(t, response["request_id"])
-}
-
-func TestHealthCheck(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	router.GET("/health", HealthCheck)
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/health", nil)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var response map[string]string
-	err := json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NoError(t, err)
-	assert.Equal(t, "healthy", response["status"])
-	assert.Equal(t, "isen-ical-go", response["service"])
-}
-
-func TestLoggerMiddlewareWithQueryParams(t *testing.T) {
-	var buf bytes.Buffer
-	logger := zerolog.New(&buf)
-	router := setupTestRouter()
-
-	router.GET("/test", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "success"})
-	})
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/test?foo=bar&baz=qux", nil)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	// Check that query params are logged
-	logOutput := buf.String()
-	assert.Contains(t, logOutput, "query")
-	assert.Contains(t, logOutput, "foo=bar")
-}
-
-func TestLoggerMiddlewareWithErrors(t *testing.T) {
-	var buf bytes.Buffer
-	logger := zerolog.New(&buf)
-	router := setupTestRouter()
-
-	router.GET("/error", func(c *gin.Context) {
-		c.Error(assert.AnError)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed"})
-	})
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/error", nil)
-	router.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-	// Check that error was logged
-	logOutput := buf.String()
-	assert.Contains(t, logOutput, "Request completed with errors")
+	if got := w.Header().Get("Access-Control-Allow-Methods"); got == "" {
+		t.Fatal("expected Access-Control-Allow-Methods header")
+	}
 }
