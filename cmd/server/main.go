@@ -40,7 +40,7 @@ func main() {
 				Name:    "valkey-url",
 				Aliases: []string{"v"},
 				Usage:   "Valkey connection URL",
-				Value:   "valkey://localhost:6379",
+				Value:   "redis://localhost:6379",
 				Sources: cli.EnvVars("VALKEY_URL"),
 			},
 			&cli.StringFlag{
