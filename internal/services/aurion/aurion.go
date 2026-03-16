@@ -346,13 +346,17 @@ func parseFormIdPlanning(html string) (string, error) {
 
 // parsePlanningData parses JSON events from the response
 func parsePlanningData(response string) ([]models.AurionEvent, error) {
-	re := regexp.MustCompile(`\[\{"id".*?}]`)
+	re := regexp.MustCompile(`\[\{"id"(.*?)\]\]`)
 	matches := re.FindStringSubmatch(response)
 	if len(matches) < 1 {
 		return nil, fmt.Errorf("planning data not found in response")
 	}
 
 	data := matches[0]
+	if len(data) < 3 {
+		return nil, fmt.Errorf("planning data not found in response")
+	}
+	data = data[:len(data)-3]
 
 	var events []models.AurionEvent
 	if err := json.Unmarshal([]byte(data), &events); err != nil {

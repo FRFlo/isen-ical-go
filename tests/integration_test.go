@@ -100,7 +100,7 @@ func newMockAurionServer() *mockAurionServer {
 			}
 
 			eventsJSON, _ := json.Marshal(events)
-			response := `<partial-response><changes><update id="form:j_idt100"><![CDATA[` + string(eventsJSON) + `]]></update></changes></partial-response>`
+			response := `<partial-response><changes><update id="form:j_idt100"><![CDATA[` + string(eventsJSON) + `x]]></update></changes></partial-response>`
 			w.Write([]byte(response))
 			return
 		}

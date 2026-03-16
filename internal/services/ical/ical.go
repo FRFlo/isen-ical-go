@@ -3,10 +3,10 @@ package ical
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/FRFlo/isen-ical-go/internal/models"
 )
@@ -78,16 +78,23 @@ func generateVEvent(event models.AurionEvent) []string {
 func parseTitle(title string) (location, additionalInfo, subject, courseType, professor string) {
 	parts := strings.Split(title, "\n")
 
-	// Pad with empty strings if less than 5 parts
-	for len(parts) < 5 {
-		parts = append(parts, "")
+	if len(parts) > 0 {
+		location = strings.TrimSpace(parts[0])
+	}
+	if len(parts) > 1 {
+		additionalInfo = strings.TrimSpace(parts[1])
+	}
+	if len(parts) > 2 {
+		subject = strings.TrimSpace(parts[2])
+	}
+	if len(parts) > 3 {
+		courseType = strings.TrimSpace(parts[3])
+	}
+	if len(parts) > 4 {
+		professor = strings.TrimSpace(parts[4])
 	}
 
-	return strings.TrimSpace(parts[0]),
-		strings.TrimSpace(parts[1]),
-		strings.TrimSpace(parts[2]),
-		strings.TrimSpace(parts[3]),
-		strings.TrimSpace(parts[4])
+	return location, additionalInfo, subject, courseType, professor
 }
 
 // buildSummary construit le résumé de l'événement avec un préfixe emoji
@@ -169,28 +176,17 @@ func foldLine(line string) string {
 	for currentPos < len(bytes) {
 		remaining := len(bytes) - currentPos
 		chunkSize := maxLength
-		if len(chunks) > 0 {
+		if currentPos > 0 {
 			chunkSize = continuationLength
 		}
 
-		if remaining <= chunkSize {
-			chunks = append(chunks, string(bytes[currentPos:]))
-			break
+		if remaining < chunkSize {
+			chunkSize = remaining
 		}
 
-		// Find a safe position to split (don't split in the middle of a UTF-8 sequence)
-		endPos := currentPos + chunkSize
-		for endPos > currentPos && !utf8.RuneStart(bytes[endPos]) {
-			endPos--
-		}
-
-		// If we can't find a valid split point, just use the original position
-		if endPos == currentPos {
-			endPos = currentPos + chunkSize
-		}
-
-		chunks = append(chunks, string(bytes[currentPos:endPos]))
-		currentPos = endPos
+		chunk := string(bytes[currentPos : currentPos+chunkSize])
+		chunks = append(chunks, chunk)
+		currentPos += chunkSize
 	}
 
 	// Join with CRLF followed by space for continuation
@@ -204,9 +200,13 @@ func formatDateUTC(t time.Time) string {
 
 // parseDate analyse une chaîne de date (timestamp ou format ISO) en time.Time
 func parseDate(dateValue string) time.Time {
-	// Try parsing as Unix timestamp (milliseconds)
-	if ms, err := strconv.ParseInt(dateValue, 10, 64); err == nil {
-		return time.Unix(ms/1000, 0)
+	// Match worker behavior: numeric strings are interpreted as milliseconds.
+	numericDate := regexp.MustCompile(`^\d+$`)
+	if numericDate.MatchString(dateValue) {
+		ms, err := strconv.ParseInt(dateValue, 10, 64)
+		if err == nil {
+			return time.Unix(ms/1000, 0)
+		}
 	}
 
 	// Try parsing as ISO 8601 format
@@ -214,8 +214,12 @@ func parseDate(dateValue string) time.Time {
 		return t
 	}
 
-	// Fallback to standard parsing
-	return time.Now()
+	// Worker accepts JS Date parsing for bare datetime strings.
+	if t, err := time.Parse("2006-01-02T15:04:05", dateValue); err == nil {
+		return t
+	}
+
+	return time.Time{}
 }
 
 // normalizeSpaces normalise les espaces blancs dans le texte

@@ -207,7 +207,7 @@ func TestParsePlanningData(t *testing.T) {
 	}{
 		{
 			name:     "valid events JSON",
-			response: `[{"id":"1","title":"Math Class","start":"2024-01-15T08:00:00","end":"2024-01-15T10:00:00","allDay":false,"editable":false,"className":"course"}]]`,
+			response: `[{"id":"1","title":"Math Class","start":"2024-01-15T08:00:00","end":"2024-01-15T10:00:00","allDay":false,"editable":false,"className":"course"}]x]]`,
 			expected: []models.AurionEvent{
 				{
 					ID:        "1",
@@ -223,7 +223,7 @@ func TestParsePlanningData(t *testing.T) {
 		},
 		{
 			name:     "multiple events",
-			response: `[{"id":"1","title":"Math","start":"2024-01-15T08:00:00","end":"2024-01-15T10:00:00","allDay":false,"editable":false,"className":"course"},{"id":"2","title":"Physics","start":"2024-01-15T10:00:00","end":"2024-01-15T12:00:00","allDay":false,"editable":false,"className":"course"}]]`,
+			response: `[{"id":"1","title":"Math","start":"2024-01-15T08:00:00","end":"2024-01-15T10:00:00","allDay":false,"editable":false,"className":"course"},{"id":"2","title":"Physics","start":"2024-01-15T10:00:00","end":"2024-01-15T12:00:00","allDay":false,"editable":false,"className":"course"}]x]]`,
 			expected: []models.AurionEvent{
 				{
 					ID:        "1",
@@ -248,7 +248,7 @@ func TestParsePlanningData(t *testing.T) {
 		},
 		{
 			name:     "allDay event",
-			response: `[{"id":"3","title":"Holiday","start":"2024-01-15","end":"2024-01-16","allDay":true,"editable":false,"className":"holiday"}]]`,
+			response: `[{"id":"3","title":"Holiday","start":"2024-01-15","end":"2024-01-16","allDay":true,"editable":false,"className":"holiday"}]x]]`,
 			expected: []models.AurionEvent{
 				{
 					ID:        "3",
