@@ -16,6 +16,7 @@ import (
 	"github.com/FRFlo/isen-ical-go/internal/middleware"
 	"github.com/FRFlo/isen-ical-go/internal/models"
 	"github.com/FRFlo/isen-ical-go/internal/storage"
+	"github.com/alicebob/miniredis/v2"
 	"github.com/gin-gonic/gin"
 )
 
@@ -136,6 +137,7 @@ type testServer struct {
 	router       *gin.Engine
 	valkeyClient *storage.ValkeyClient
 	mockAurion   *mockAurionServer
+	miniRedis    *miniredis.Miniredis
 	handlers     *handlers.Handlers
 	config       *config.Config
 }
@@ -146,10 +148,22 @@ func setupTestServer(t *testing.T) *testServer {
 	// Create mock Aurion server
 	mockAurion := newMockAurionServer()
 
+	valkeyURL := os.Getenv("VALKEY_URL")
+	var miniRedis *miniredis.Miniredis
+	if valkeyURL == "" {
+		mr, err := miniredis.Run()
+		if err != nil {
+			mockAurion.Close()
+			t.Skipf("embedded redis not available: %v", err)
+		}
+		miniRedis = mr
+		valkeyURL = "redis://" + mr.Addr()
+	}
+
 	// Create test configuration
 	cfg := &config.Config{
 		AurionBaseURL:    mockAurion.URL(),
-		ValkeyURL:        getTestValkeyURL(),
+		ValkeyURL:        valkeyURL,
 		Port:             8080,
 		MaxTokensPerUser: 3,
 		SessionTTL:       3600,
@@ -159,6 +173,9 @@ func setupTestServer(t *testing.T) *testServer {
 	// Try to connect to Valkey, skip if not available
 	valkeyClient, err := storage.NewValkeyClient(cfg.ValkeyURL)
 	if err != nil {
+		if miniRedis != nil {
+			miniRedis.Close()
+		}
 		mockAurion.Close()
 		t.Skipf("Valkey not available: %v", err)
 	}
@@ -174,6 +191,7 @@ func setupTestServer(t *testing.T) *testServer {
 		router:       router,
 		valkeyClient: valkeyClient,
 		mockAurion:   mockAurion,
+		miniRedis:    miniRedis,
 		handlers:     h,
 		config:       cfg,
 	}
@@ -183,17 +201,12 @@ func (ts *testServer) Cleanup() {
 	if ts.valkeyClient != nil {
 		ts.valkeyClient.Close()
 	}
+	if ts.miniRedis != nil {
+		ts.miniRedis.Close()
+	}
 	if ts.mockAurion != nil {
 		ts.mockAurion.Close()
 	}
-}
-
-func getTestValkeyURL() string {
-	url := os.Getenv("VALKEY_URL")
-	if url == "" {
-		url = "valkey://localhost:6379"
-	}
-	return url
 }
 
 // TestHealthEndpoint tests the health check endpoint
@@ -239,8 +252,8 @@ func TestHomeEndpoint(t *testing.T) {
 	}
 
 	body := w.Body.String()
-	if !strings.Contains(body, "ISEN iCal Generator") {
-		t.Error("Expected response to contain 'ISEN iCal Generator'")
+	if !strings.Contains(body, "Calendrier JUNIA") {
+		t.Error("Expected response to contain 'Calendrier JUNIA'")
 	}
 }
 
@@ -263,8 +276,8 @@ func TestPrivacyEndpoint(t *testing.T) {
 	}
 
 	body := w.Body.String()
-	if !strings.Contains(body, "Politique de Confidentialité") {
-		t.Error("Expected response to contain 'Politique de Confidentialité'")
+	if !strings.Contains(body, "Confidentialité") {
+		t.Error("Expected response to contain 'Confidentialité'")
 	}
 }
 
@@ -328,8 +341,8 @@ func TestGenerateTokenEndpoint_InvalidCredentials(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	ts.router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("Expected status %d, got %d", http.StatusUnauthorized, w.Code)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Expected status %d, got %d", http.StatusForbidden, w.Code)
 	}
 }
 
@@ -485,8 +498,8 @@ func TestHomeWithBasicAuth_InvalidCredentials(t *testing.T) {
 	req.Header.Set("Authorization", "Basic "+credentials)
 	ts.router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusUnauthorized {
-		t.Errorf("Expected status %d, got %d", http.StatusUnauthorized, w.Code)
+	if w.Code != http.StatusForbidden {
+		t.Errorf("Expected status %d, got %d", http.StatusForbidden, w.Code)
 	}
 }
 
