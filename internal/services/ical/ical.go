@@ -209,14 +209,29 @@ func parseDate(dateValue string) time.Time {
 		}
 	}
 
+	// Try parsing as ISO 8601 format with timezone.
+	if t, err := time.Parse(time.RFC3339Nano, dateValue); err == nil {
+		return t
+	}
+
 	// Try parsing as ISO 8601 format
 	if t, err := time.Parse(time.RFC3339, dateValue); err == nil {
 		return t
 	}
 
-	// Worker accepts JS Date parsing for bare datetime strings.
-	if t, err := time.Parse("2006-01-02T15:04:05", dateValue); err == nil {
-		return t
+	// Worker's Date parser also accepts timezone-less formats and date-only strings.
+	layouts := []string{
+		"2006-01-02T15:04:05.000-0700",
+		"2006-01-02T15:04:05-0700",
+		"2006-01-02T15:04:05.000",
+		"2006-01-02T15:04:05",
+		"2006-01-02 15:04:05",
+		"2006-01-02",
+	}
+	for _, layout := range layouts {
+		if t, err := time.ParseInLocation(layout, dateValue, time.UTC); err == nil {
+			return t
+		}
 	}
 
 	return time.Time{}

@@ -1,12 +1,25 @@
 package ical
 
 import (
+	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/FRFlo/isen-ical-go/internal/models"
 )
+
+type planningJSONPayload struct {
+	Events []models.AurionEvent `json:"events"`
+}
+
+type parsedICalEvent struct {
+	UID     string
+	DTStart string
+	DTEnd   string
+	Summary string
+}
 
 func TestGenerateICal_ValidStructure(t *testing.T) {
 	events := []models.AurionEvent{
@@ -409,15 +422,37 @@ func TestParseDate(t *testing.T) {
 			input:    "2024-01-15T10:00:00Z",
 			expected: time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC),
 		},
+		{
+			name:     "ISO offset without colon (+0100)",
+			input:    "2026-03-09T09:05:00+0100",
+			expected: time.Date(2026, 3, 9, 8, 5, 0, 0, time.UTC),
+		},
+		{
+			name:     "ISO offset without colon (+0200)",
+			input:    "2026-03-30T09:05:00+0200",
+			expected: time.Date(2026, 3, 30, 7, 5, 0, 0, time.UTC),
+		},
+		{
+			name:     "Date-only format",
+			input:    "2024-01-15",
+			expected: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "Datetime with space separator",
+			input:    "2024-01-15 10:00:00",
+			expected: time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "Invalid date returns zero time",
+			input:    "not-a-date",
+			expected: time.Time{},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := parseDate(tt.input)
-			// Compare with some tolerance for timezone differences
-			if result.Year() != tt.expected.Year() ||
-				result.Month() != tt.expected.Month() ||
-				result.Day() != tt.expected.Day() {
+			if !result.Equal(tt.expected) {
 				t.Errorf("parseDate() = %v, want %v", result, tt.expected)
 			}
 		})
@@ -501,4 +536,103 @@ func TestGenerateICal_EmptyEvents(t *testing.T) {
 	if strings.Contains(result, "BEGIN:VEVENT") {
 		t.Error("Should not have VEVENT when no events provided")
 	}
+}
+
+func TestGenerateICal_PlanningJSONDateParity(t *testing.T) {
+	fixture, err := os.ReadFile("../../../planning.json")
+	if err != nil {
+		t.Fatalf("failed to read planning.json fixture: %v", err)
+	}
+
+	var payload planningJSONPayload
+	if err := json.Unmarshal(fixture, &payload); err != nil {
+		t.Fatalf("failed to unmarshal planning.json fixture: %v", err)
+	}
+
+	icalContent := GenerateICal(payload.Events)
+	parsedEvents := parseICalEvents(icalContent)
+
+	if len(parsedEvents) != len(payload.Events) {
+		t.Fatalf("VEVENT count mismatch: got %d, want %d", len(parsedEvents), len(payload.Events))
+	}
+
+	byUID := make(map[string]parsedICalEvent, len(parsedEvents))
+	for _, evt := range parsedEvents {
+		byUID[evt.UID] = evt
+	}
+
+	for _, raw := range payload.Events {
+		uid := raw.ID + "@isen-ical"
+		evt, ok := byUID[uid]
+		if !ok {
+			t.Fatalf("missing VEVENT for UID %s", uid)
+		}
+
+		start, err := time.Parse("2006-01-02T15:04:05-0700", raw.Start)
+		if err != nil {
+			t.Fatalf("invalid fixture start %q for event %s: %v", raw.Start, raw.ID, err)
+		}
+		end, err := time.Parse("2006-01-02T15:04:05-0700", raw.End)
+		if err != nil {
+			t.Fatalf("invalid fixture end %q for event %s: %v", raw.End, raw.ID, err)
+		}
+
+		expectedStart := formatDateUTC(start)
+		expectedEnd := formatDateUTC(end)
+
+		if evt.DTStart != expectedStart {
+			t.Fatalf("DTSTART mismatch for %s: got %s, want %s", raw.ID, evt.DTStart, expectedStart)
+		}
+		if evt.DTEnd != expectedEnd {
+			t.Fatalf("DTEND mismatch for %s: got %s, want %s", raw.ID, evt.DTEnd, expectedEnd)
+		}
+		if strings.TrimSpace(evt.Summary) == "" {
+			t.Fatalf("empty SUMMARY for event %s", raw.ID)
+		}
+	}
+}
+
+func parseICalEvents(content string) []parsedICalEvent {
+	rawLines := strings.Split(content, "\r\n")
+	lines := make([]string, 0, len(rawLines))
+	for _, line := range rawLines {
+		if strings.HasPrefix(line, " ") && len(lines) > 0 {
+			lines[len(lines)-1] += strings.TrimPrefix(line, " ")
+			continue
+		}
+		lines = append(lines, line)
+	}
+
+	events := make([]parsedICalEvent, 0)
+	inEvent := false
+	current := parsedICalEvent{}
+
+	for _, line := range lines {
+		switch line {
+		case "BEGIN:VEVENT":
+			inEvent = true
+			current = parsedICalEvent{}
+		case "END:VEVENT":
+			if inEvent {
+				events = append(events, current)
+			}
+			inEvent = false
+		default:
+			if !inEvent {
+				continue
+			}
+			switch {
+			case strings.HasPrefix(line, "UID:"):
+				current.UID = strings.TrimPrefix(line, "UID:")
+			case strings.HasPrefix(line, "DTSTART:"):
+				current.DTStart = strings.TrimPrefix(line, "DTSTART:")
+			case strings.HasPrefix(line, "DTEND:"):
+				current.DTEnd = strings.TrimPrefix(line, "DTEND:")
+			case strings.HasPrefix(line, "SUMMARY:"):
+				current.Summary = strings.TrimPrefix(line, "SUMMARY:")
+			}
+		}
+	}
+
+	return events
 }

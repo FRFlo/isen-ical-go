@@ -1,0 +1,400 @@
+{
+  "events": [
+    {
+      "id": "75288123",
+      "title": "\nFACULTATIF en teams : ALL ABOUT JUNIA \u2013 Vos diplômes, vos programmes, votre avenir avec Alexandre RIGAL, votre Directeur Général\n\nCONF\nMadame BERDIN",
+      "start": "2026-03-02T18:00:00+0100",
+      "end": "2026-03-02T19:30:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "CONF"
+    },
+    {
+      "id": "69107383",
+      "title": "ALG Salle 205 H\n\nRetour Expérience Entreprise\nCOURS_TD\nMadame BEAUMONT",
+      "start": "2026-03-09T09:05:00+0100",
+      "end": "2026-03-09T12:25:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "69107037",
+      "title": "IC1_427\n\nOutils mathématiques pour l'ingénieur 2\nCOURS_TD\nMonsieur HANNEBICQ",
+      "start": "2026-03-09T13:30:00+0100",
+      "end": "2026-03-09T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "69106343",
+      "title": "IC1_222\n\nAnglais\nCOURS_TD\nMadame PEARSON",
+      "start": "2026-03-10T08:00:00+0100",
+      "end": "2026-03-10T10:00:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "75645031",
+      "title": "IC1_122\n\n\nREUNION\nMadame DEHONDT",
+      "start": "2026-03-10T10:15:00+0100",
+      "end": "2026-03-10T10:45:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "REUNION"
+    },
+    {
+      "id": "69107062",
+      "title": "IC1_229\n\nOutils mathématiques pour l'ingénieur 2\nCOURS_TD\nMonsieur HANNEBICQ",
+      "start": "2026-03-10T13:30:00+0100",
+      "end": "2026-03-10T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "69105981",
+      "title": "IC2 C350 - TV\n\nArchitecture des ordinateurs\nCOURS_TD\nMonsieur LAMBERT",
+      "start": "2026-03-11T09:05:00+0100",
+      "end": "2026-03-11T12:25:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "69107862",
+      "title": "IC1_427\n\nBDD\nCOURS_TD\nMonsieur DELANNOY",
+      "start": "2026-03-11T13:30:00+0100",
+      "end": "2026-03-11T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "70857641",
+      "title": "\nTravail personnel\n\nAUTO_APPR\nMadame DEHONDT",
+      "start": "2026-03-12T08:00:00+0100",
+      "end": "2026-03-12T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "AUTO_APPR"
+    },
+    {
+      "id": "70316703",
+      "title": "\nFresque du climat - Hall du Palais Rameau - Merci d\u2019apporter des feutres et\/ou crayons de couleur pour cet atelier\nEnjeux du DD (RSE)\nTP\nMadame DEWEER",
+      "start": "2026-03-12T13:30:00+0100",
+      "end": "2026-03-12T16:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "69107911",
+      "title": "IC1_427\n\nBDD\nTP\nMonsieur DELANNOY",
+      "start": "2026-03-13T08:00:00+0100",
+      "end": "2026-03-13T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "70857579",
+      "title": "\nTravail personnel\n\nAUTO_APPR\nMadame DEHONDT",
+      "start": "2026-03-13T13:30:00+0100",
+      "end": "2026-03-13T16:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "AUTO_APPR"
+    },
+    {
+      "id": "69105995",
+      "title": "IC2 C350 - TV\n\nArchitecture des ordinateurs\nCOURS_TD\nMonsieur LAMBERT",
+      "start": "2026-03-16T08:00:00+0100",
+      "end": "2026-03-16T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "70316736",
+      "title": "IC2 C257 - TV\n\nEnjeux du DD (RSE)\nTD\nMadame DEWEER",
+      "start": "2026-03-16T13:30:00+0100",
+      "end": "2026-03-16T15:30:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TD"
+    },
+    {
+      "id": "69106478",
+      "title": "IC1_412\n\nAnglais\nCOURS_TD\nMadame PEARSON",
+      "start": "2026-03-17T10:20:00+0100",
+      "end": "2026-03-17T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "69107075",
+      "title": "IC1_229\n\nOutils mathématiques pour l'ingénieur 2\nCOURS_TD\nMonsieur HANNEBICQ",
+      "start": "2026-03-17T13:30:00+0100",
+      "end": "2026-03-17T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "70316950",
+      "title": "ALG Salle 204 avec TV pour projection\n\nEnjeux du DD (RSE)\nTD_AUTO_GERE_PLANIFIE\nMadame DEWEER",
+      "start": "2026-03-18T09:05:00+0100",
+      "end": "2026-03-18T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TD_AUTO_GERE_PLANIFIE"
+    },
+    {
+      "id": "69107881",
+      "title": "IC1_427\n\nBDD\nTP\nMonsieur DELANNOY",
+      "start": "2026-03-18T13:30:00+0100",
+      "end": "2026-03-18T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "69106009",
+      "title": "IC2 C350 - TV\n\nArchitecture des ordinateurs\nTP\nMonsieur LAMBERT",
+      "start": "2026-03-19T08:00:00+0100",
+      "end": "2026-03-19T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "75588955",
+      "title": "IC1_017 amphi Mathilda\nFACULTATIF : Conférence du capitaine Lecocq (B2RS) sur le renseignement militaire, organisée par JUNIA Défense\n\n\nCONF\n ",
+      "start": "2026-03-19T13:30:00+0100",
+      "end": "2026-03-19T14:30:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "CONF"
+    },
+    {
+      "id": "70857598",
+      "title": "\nTravail personnel\n\nAUTO_APPR\nMadame DEHONDT",
+      "start": "2026-03-19T13:30:00+0100",
+      "end": "2026-03-19T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "AUTO_APPR"
+    },
+    {
+      "id": "69107925",
+      "title": "IC1_427\n\nBDD\nTP\nMonsieur DELANNOY",
+      "start": "2026-03-20T08:00:00+0100",
+      "end": "2026-03-20T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "70316968",
+      "title": "ALG Salle 204 avec TV pour projection\n\nEnjeux du DD (RSE)\nTD_AUTO_GERE_PLANIFIE\nMadame DEWEER",
+      "start": "2026-03-20T13:30:00+0100",
+      "end": "2026-03-20T16:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TD_AUTO_GERE_PLANIFIE"
+    },
+    {
+      "id": "69106037",
+      "title": "IC2 C350 - TV\n\nArchitecture des ordinateurs\nTP\nMonsieur LAMBERT",
+      "start": "2026-03-23T08:00:00+0100",
+      "end": "2026-03-23T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "70316993",
+      "title": "ALG Salle 204 avec TV pour projection\n\nEnjeux du DD (RSE)\nTD_AUTO_GERE_PLANIFIE\nMadame DEWEER",
+      "start": "2026-03-23T13:30:00+0100",
+      "end": "2026-03-23T16:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TD_AUTO_GERE_PLANIFIE"
+    },
+    {
+      "id": "69106369",
+      "title": "ALG Salle 211\n\nAnglais\nCOURS_TD\nMadame PEARSON",
+      "start": "2026-03-24T08:00:00+0100",
+      "end": "2026-03-24T10:00:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "69107100",
+      "title": "IC2 B803     (H)\n\nOutils mathématiques pour l'ingénieur 2\nCOURS_TD\nMonsieur HANNEBICQ",
+      "start": "2026-03-24T13:30:00+0100",
+      "end": "2026-03-24T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "70317023",
+      "title": "ALG Salle 204 avec TV pour projection\n\nEnjeux du DD (RSE)\nTD_AUTO_GERE_PLANIFIE\nMadame DEWEER",
+      "start": "2026-03-25T09:05:00+0100",
+      "end": "2026-03-25T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TD_AUTO_GERE_PLANIFIE"
+    },
+    {
+      "id": "69107895",
+      "title": "IC1_427\n\nBDD\nTP\nMonsieur DELANNOY",
+      "start": "2026-03-25T13:30:00+0100",
+      "end": "2026-03-25T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "69106051",
+      "title": "IC2 C350 - TV\n\nArchitecture des ordinateurs\nCOURS_TD\nMonsieur LAMBERT",
+      "start": "2026-03-26T08:00:00+0100",
+      "end": "2026-03-26T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "70857622",
+      "title": "\nTravail personnel\n\nAUTO_APPR\nMadame DEHONDT",
+      "start": "2026-03-26T13:30:00+0100",
+      "end": "2026-03-26T17:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "AUTO_APPR"
+    },
+    {
+      "id": "69600113",
+      "title": "IC2 C350 - TV\n\nArchitecture des ordinateurs\nTP\nMonsieur LAMBERT",
+      "start": "2026-03-27T09:05:00+0100",
+      "end": "2026-03-27T12:20:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "70317049",
+      "title": "ALG Salle 204 avec TV pour projection\n\nEnjeux du DD (RSE)\nTD_AUTO_GERE_PLANIFIE\nMadame DEWEER",
+      "start": "2026-03-27T13:30:00+0100",
+      "end": "2026-03-27T16:50:00+0100",
+      "allDay": false,
+      "editable": true,
+      "className": "TD_AUTO_GERE_PLANIFIE"
+    },
+    {
+      "id": "70317080",
+      "title": "ALG Salle 204 avec TV pour projection\n\nEnjeux du DD (RSE)\nTD_AUTO_GERE_PLANIFIE\nMadame DEWEER",
+      "start": "2026-03-30T09:05:00+0200",
+      "end": "2026-03-30T12:20:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "TD_AUTO_GERE_PLANIFIE"
+    },
+    {
+      "id": "69107114",
+      "title": "IC2 B803     (H)\n\nOutils mathématiques pour l'ingénieur 2\nCOURS_TD\nMonsieur HANNEBICQ",
+      "start": "2026-03-30T13:30:00+0200",
+      "end": "2026-03-30T17:50:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "69106504",
+      "title": "ALG Salle 211\n\nAnglais\nCOURS_TD\nMadame PEARSON",
+      "start": "2026-03-31T10:20:00+0200",
+      "end": "2026-03-31T12:20:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "COURS_TD"
+    },
+    {
+      "id": "70857653",
+      "title": "\nTravail personnel\n\nAUTO_APPR\nMadame DEHONDT",
+      "start": "2026-03-31T13:30:00+0200",
+      "end": "2026-03-31T17:50:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "AUTO_APPR"
+    },
+    {
+      "id": "70862510",
+      "title": "\nTravail personnel\n\nAUTO_APPR\nMadame DEHONDT",
+      "start": "2026-04-01T08:00:00+0200",
+      "end": "2026-04-01T12:20:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "AUTO_APPR"
+    },
+    {
+      "id": "70857666",
+      "title": "\nTravail personnel\n\nAUTO_APPR\nMadame DEHONDT",
+      "start": "2026-04-01T13:30:00+0200",
+      "end": "2026-04-01T17:50:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "AUTO_APPR"
+    },
+    {
+      "id": "74864840",
+      "title": "IC2 B506     (H)\nTP noté\nArchitecture des ordinateurs\nTP\nMonsieur LAMBERT",
+      "start": "2026-04-02T09:05:00+0200",
+      "end": "2026-04-02T10:05:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "TP"
+    },
+    {
+      "id": "69107966",
+      "title": "\n\nArchitecture des ordinateurs\nEXAM_SURV\n ",
+      "start": "2026-04-02T10:30:00+0200",
+      "end": "2026-04-02T12:30:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "est-epreuve"
+    },
+    {
+      "id": "70859558",
+      "title": "\nTravail personnel\n\nAUTO_APPR\nMadame DEHONDT",
+      "start": "2026-04-02T13:30:00+0200",
+      "end": "2026-04-02T17:50:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "AUTO_APPR"
+    },
+    {
+      "id": "69107770",
+      "title": "\n\nOutils mathématiques pour l'ingénieur 2\nEXAM_SURV\n ",
+      "start": "2026-04-03T10:30:00+0200",
+      "end": "2026-04-03T12:30:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "est-epreuve"
+    },
+    {
+      "id": "69107939",
+      "title": "\nEpreuve en 2 parties : 1h QCM sans ordinateur+ 1h TP avec ordinateur\nBDD\nEXAM_SURV\n ",
+      "start": "2026-04-03T13:30:00+0200",
+      "end": "2026-04-03T15:30:00+0200",
+      "allDay": false,
+      "editable": true,
+      "className": "est-epreuve"
+    }
+  ]
+}
