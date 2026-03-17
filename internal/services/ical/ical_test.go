@@ -539,14 +539,14 @@ func TestGenerateICal_EmptyEvents(t *testing.T) {
 }
 
 func TestGenerateICal_PlanningJSONDateParity(t *testing.T) {
-	fixture, err := os.ReadFile("../../../planning.json")
+	fixture, err := os.ReadFile("../../../tests/fixtures/planning.sample.json")
 	if err != nil {
-		t.Fatalf("failed to read planning.json fixture: %v", err)
+		t.Fatalf("failed to read planning.sample.json fixture: %v", err)
 	}
 
 	var payload planningJSONPayload
 	if err := json.Unmarshal(fixture, &payload); err != nil {
-		t.Fatalf("failed to unmarshal planning.json fixture: %v", err)
+		t.Fatalf("failed to unmarshal planning.sample.json fixture: %v", err)
 	}
 
 	icalContent := GenerateICal(payload.Events)
