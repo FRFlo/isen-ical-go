@@ -488,6 +488,56 @@ func TestNormalizeSpaces(t *testing.T) {
 	}
 }
 
+func TestFormatLocation(t *testing.T) {
+	tests := []struct {
+		name     string
+		location string
+		expected string
+	}{
+		{
+			name:     "keyword found appends address",
+			location: "IC2 - Salle 12",
+			expected: "IC2 - Salle 12 - " + locationAddressByKeyword["IC2"],
+		},
+		{
+			name:     "keyword search is case insensitive",
+			location: "ic2 amphi",
+			expected: "ic2 amphi - " + locationAddressByKeyword["IC2"],
+		},
+		{
+			name:     "no keyword keeps original location",
+			location: "Room 101",
+			expected: "Room 101",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := formatLocation(tt.location)
+			if result != tt.expected {
+				t.Errorf("formatLocation(%q) = %q, want %q", tt.location, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestGenerateICal_LocationAddressEnrichment(t *testing.T) {
+	events := []models.AurionEvent{
+		{
+			ID:    "location-enrichment",
+			Title: "IC2\nAdditional info\nMath\nCM\nProf",
+			Start: "1705312800000",
+			End:   "1705320000000",
+		},
+	}
+
+	result := GenerateICal(events)
+
+	if !strings.Contains(result, "LOCATION:IC2 - "+strings.ReplaceAll(locationAddressByKeyword["IC2"], ",", "\\,")) {
+		t.Fatalf("expected LOCATION to include mapped address, got:\n%s", result)
+	}
+}
+
 func TestGenerateICal_MultipleEvents(t *testing.T) {
 	events := []models.AurionEvent{
 		{

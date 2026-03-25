@@ -11,6 +11,14 @@ import (
 	"github.com/FRFlo/isen-ical-go/internal/models"
 )
 
+var locationAddressByKeyword = map[string]string{
+	"ALG":           "2 Rue Norbert Segard, 59800 Lille",
+	"MF":            "3 Rue Norbert Segard, 59800 Lille",
+	"Palais Rameau": "39 Boulevard Vauban, 59800 Lille",
+	"IC1":           "16 Rue Colson, 59800 Lille",
+	"IC2":           "41 Boulevard Vauban, 59800 Lille",
+}
+
 // GenerateICal génère un calendrier iCal à partir d'une liste d'événements Aurion
 func GenerateICal(events []models.AurionEvent) string {
 	var lines []string
@@ -60,7 +68,7 @@ func generateVEvent(event models.AurionEvent) []string {
 	lines = append(lines, fmt.Sprintf("SUMMARY:%s", escapeText(summary)))
 
 	if location != "" {
-		lines = append(lines, fmt.Sprintf("LOCATION:%s", escapeText(normalizeSpaces(location))))
+		lines = append(lines, fmt.Sprintf("LOCATION:%s", escapeText(formatLocation(location))))
 	}
 
 	if description != "" {
@@ -242,4 +250,20 @@ func normalizeSpaces(text string) string {
 	// Replace multiple spaces/tabs with single space
 	fields := strings.Fields(text)
 	return strings.Join(fields, " ")
+}
+
+func formatLocation(location string) string {
+	normalizedLocation := normalizeSpaces(location)
+	if normalizedLocation == "" {
+		return ""
+	}
+
+	upperLocation := strings.ToUpper(normalizedLocation)
+	for keyword, address := range locationAddressByKeyword {
+		if strings.Contains(upperLocation, strings.ToUpper(keyword)) {
+			return fmt.Sprintf("%s - %s", normalizedLocation, address)
+		}
+	}
+
+	return normalizedLocation
 }
