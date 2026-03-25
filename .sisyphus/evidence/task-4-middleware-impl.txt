@@ -1,0 +1,4 @@
+Command: grep "authHeader := c.GetHeader(\"Authorization\")" internal/middleware/admin_auth.go && grep "subtle.ConstantTimeCompare" internal/middleware/admin_auth.go
+Output:
+		authHeader := c.GetHeader("Authorization")
+		if subtle.ConstantTimeCompare([]byte(token), []byte(adminToken)) != 1 {

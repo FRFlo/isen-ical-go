@@ -1,0 +1,6 @@
+Command: grep "admin-api-token" cmd/server/main.go && grep "ADMIN_API_TOKEN" cmd/server/main.go
+Output:
+				Name:    "admin-api-token",
+				AdminAPIToken:    cmd.String("admin-api-token"),
+				Sources: cli.EnvVars("ADMIN_API_TOKEN"),
+				logger.Warn().Msg("ADMIN_API_TOKEN n'est pas configuré. Les fonctionnalités d'administration seront limitées.")

@@ -1,0 +1,6 @@
+Command: grep -r "WWW-Authenticate" internal/middleware/admin_auth.go
+Output:
+			c.Header("WWW-Authenticate", "Bearer")
+			c.Header("WWW-Authenticate", "Bearer")
+			c.Header("WWW-Authenticate", "Bearer")
+			c.Header("WWW-Authenticate", "Bearer")

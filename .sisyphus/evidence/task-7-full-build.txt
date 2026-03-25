@@ -1,0 +1,6 @@
+Command: go build ./... && go test ./... && go vet ./...
+Output:
+go build ./... (Exit: 0)
+go test ./... (Exit: 0)
+go vet ./... (Exit: 0)
+All tests passed (cached).

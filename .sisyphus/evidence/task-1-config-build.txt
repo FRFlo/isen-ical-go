@@ -1,0 +1,4 @@
+Command: go build ./... && go vet ./internal/config/...
+Output:
+go build ./... (Exit: 0)
+go vet ./internal/config/... (Exit: 0)

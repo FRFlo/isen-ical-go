@@ -1,0 +1,4 @@
+Command: grep "/api/health" internal/handlers/handlers.go && grep "r.GET(\"/health\"" internal/handlers/handlers.go
+Output:
+	r.GET("/api/health", h.Health)
+Route /health not found

@@ -1,0 +1,8 @@
+Verification: start server and curl endpoints
+Command: curl -v http://localhost:9091/api/health && curl -v http://localhost:9091/health
+Output:
+GET /api/health -> 200 OK
+{"status":"healthy"}
+
+GET /health -> 404 Not Found
+(Old route confirmed removed)

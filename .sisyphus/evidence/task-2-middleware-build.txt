@@ -1,0 +1,3 @@
+Command: go build ./internal/middleware/...
+Output:
+go build ./internal/middleware/... (Exit: 0)

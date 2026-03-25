@@ -1,0 +1,20 @@
+Command: go test -v ./internal/middleware/admin_auth_test.go ./internal/middleware/admin_auth.go
+Output:
+=== RUN   TestAdminAuthMiddleware_MissingHeader
+--- PASS: TestAdminAuthMiddleware_MissingHeader (0.00s)
+=== RUN   TestAdminAuthMiddleware_MalformedScheme
+--- PASS: TestAdminAuthMiddleware_MalformedScheme (0.00s)
+=== RUN   TestAdminAuthMiddleware_EmptyToken
+--- PASS: TestAdminAuthMiddleware_EmptyToken (0.00s)
+=== RUN   TestAdminAuthMiddleware_WrongToken
+--- PASS: TestAdminAuthMiddleware_WrongToken (0.00s)
+=== RUN   TestAdminAuthMiddleware_Success
+--- PASS: TestAdminAuthMiddleware_Success (0.00s)
+=== RUN   TestAdminAuthMiddleware_CaseInsensitivity
+=== RUN   TestAdminAuthMiddleware_CaseInsensitivity/lowercase
+=== RUN   TestAdminAuthMiddleware_CaseInsensitivity/uppercase
+--- PASS: TestAdminAuthMiddleware_CaseInsensitivity (0.00s)
+    --- PASS: TestAdminAuthMiddleware_CaseInsensitivity/lowercase (0.00s)
+    --- PASS: TestAdminAuthMiddleware_CaseInsensitivity/uppercase (0.00s)
+PASS
+ok  	command-line-arguments	0.868s

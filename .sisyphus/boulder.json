@@ -1,9 +1,77 @@
 {
-  "active_plan": "C:\\Users\\Flo\\Desktop\\isen-ical-go\\.sisyphus\\plans\\isen-ical-go.md",
-  "started_at": "2026-02-13T20:10:31.273Z",
+  "active_plan": "C:\\Users\\fdelelis\\Desktop\\isen-ical-go\\.sisyphus\\plans\\admin-api.md",
+  "started_at": "2026-03-25T14:08:57.805Z",
   "session_ids": [
-    "ses_3a7982ffeffeXwkCzY4ujksTwJ"
+    "ses_2dab4f15cffePIJ1y5Ou7iQQHR",
+    "ses_2daa98f7fffeVYqh5Z4DCOeG6w",
+    "ses_2daa98f79ffeqeOivR0ByJyF12",
+    "ses_2daa98fe2ffeM1HUc2gYzHkwgy",
+    "ses_2daa4e528ffekdhxwExtfzc4YP",
+    "ses_2daa28ec7ffehjelXhSBoO56DE",
+    "ses_2daa1091dffeO0u3bAbFkh5875",
+    "ses_2da9d7674ffeqz5ufVGn9MPNfF",
+    "ses_2da998aebffeT7sEBrYq21cSoR",
+    "ses_2da998982ffe7C98KLm6MFLCNv",
+    "ses_2da998ae9ffesoyUVFmh8l6kxr",
+    "ses_2da998bc3ffenrzhl9Aes78ijf",
+    "ses_2da94c303ffectgp3Sbj13gBGf"
   ],
-  "plan_name": "isen-ical-go",
-  "agent": "atlas"
+  "plan_name": "admin-api",
+  "agent": "atlas",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Add ADMIN_API_TOKEN to config",
+      "session_id": "ses_2daa98fe2ffeM1HUc2gYzHkwgy",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-25T14:13:15.192Z"
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "Implement AdminAuthMiddleware",
+      "session_id": "ses_2daa4e528ffekdhxwExtfzc4YP",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-25T14:17:43.592Z"
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "Move /health endpoint to /api/health",
+      "session_id": "ses_2daa28ec7ffehjelXhSBoO56DE",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-25T14:20:01.594Z"
+    },
+    "todo:6": {
+      "task_key": "todo:6",
+      "task_label": "6",
+      "task_title": "Write AdminAuthMiddleware unit tests",
+      "session_id": "ses_2daa1091dffeO0u3bAbFkh5875",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-25T14:22:07.575Z"
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "Integration verification",
+      "session_id": "ses_2da9d7674ffeqz5ufVGn9MPNfF",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-25T14:27:31.045Z"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "ses_2da94c303ffectgp3Sbj13gBGf",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-03-25T14:36:55.003Z"
+    }
+  }
 }

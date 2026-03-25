@@ -1,0 +1,2 @@
+Command: grep -c "TestAdminAuthMiddleware" internal/middleware/admin_auth_test.go
+Output: 6

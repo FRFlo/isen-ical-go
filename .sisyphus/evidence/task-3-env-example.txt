@@ -1,0 +1,3 @@
+Command: grep "ADMIN_API_TOKEN" .env.example
+Output:
+ADMIN_API_TOKEN=your-32-character-admin-token-here
