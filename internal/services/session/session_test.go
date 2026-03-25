@@ -51,7 +51,7 @@ func setupValkeyContainer(t *testing.T) (string, func()) {
 		t.Fatalf("failed to get valkey port: %v", err)
 	}
 
-	valkeyURL := fmt.Sprintf("valkey://%s:%s", host, port.Port())
+	valkeyURL := fmt.Sprintf("redis://%s:%s", host, port.Port())
 
 	cleanup := func() {
 		if err := valkeyC.Terminate(ctx); err != nil {
