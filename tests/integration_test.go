@@ -214,12 +214,13 @@ func TestHealthEndpoint(t *testing.T) {
 	ts := setupTestServer(t)
 	defer ts.Cleanup()
 
+	// Test /api/health (New)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/health", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/health", nil)
 	ts.router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+		t.Errorf("Expected status %d for /api/health, got %d", http.StatusOK, w.Code)
 	}
 
 	var response map[string]interface{}
@@ -229,6 +230,15 @@ func TestHealthEndpoint(t *testing.T) {
 
 	if response["status"] != "healthy" {
 		t.Errorf("Expected status 'healthy', got %v", response["status"])
+	}
+
+	// Test /health (Old, should be 404)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(http.MethodGet, "/health", nil)
+	ts.router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status %d for /health, got %d", http.StatusNotFound, w.Code)
 	}
 }
 
@@ -583,7 +593,7 @@ func TestEndToEndWorkflow(t *testing.T) {
 
 	// Step 4: Verify health endpoint still works
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest(http.MethodGet, "/health", nil)
+	req, _ = http.NewRequest(http.MethodGet, "/api/health", nil)
 	ts.router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -624,7 +634,7 @@ func TestConcurrentRequests(t *testing.T) {
 	// Request 1: Health
 	go func() {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest(http.MethodGet, "/health", nil)
+		req, _ := http.NewRequest(http.MethodGet, "/api/health", nil)
 		ts.router.ServeHTTP(w, req)
 		if w.Code != http.StatusOK {
 			t.Errorf("Health request failed: %d", w.Code)

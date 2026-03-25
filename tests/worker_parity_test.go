@@ -123,7 +123,7 @@ func TestWorkerParity_ResponseIncludesTracingHeaders(t *testing.T) {
 	defer ts.Cleanup()
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, "/health", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/health", nil)
 	ts.router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
