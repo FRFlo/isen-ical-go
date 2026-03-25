@@ -78,6 +78,11 @@ func main() {
 				Value:   "debug",
 				Sources: cli.EnvVars("GIN_MODE"),
 			},
+			&cli.StringFlag{
+				Name:    "admin-api-token",
+				Usage:   "Admin API token for management operations",
+				Sources: cli.EnvVars("ADMIN_API_TOKEN"),
+			},
 		},
 		// Action principale : initialise et démarre le serveur
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -98,6 +103,12 @@ func main() {
 				MaxTokensPerUser: cmd.Int("max-tokens"),
 				SessionTTL:       cmd.Int("session-ttl"),
 				CacheTTL:         cmd.Int("cache-ttl"),
+				AdminAPIToken:    cmd.String("admin-api-token"),
+			}
+
+			// Avertissement si le token Admin API n'est pas configuré
+			if cfg.AdminAPIToken == "" {
+				logger.Warn().Msg("ADMIN_API_TOKEN n'est pas configuré. Les fonctionnalités d'administration seront limitées.")
 			}
 
 			// Traitement de la clé de chiffrement (optionnelle mais recommandée)

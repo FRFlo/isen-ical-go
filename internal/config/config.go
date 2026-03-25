@@ -12,4 +12,5 @@ type Config struct {
 	MaxTokensPerUser int    `envconfig:"MAX_TOKENS_PER_USER"`
 	SessionTTL       int    `envconfig:"SESSION_TTL"`
 	CacheTTL         int    `envconfig:"CACHE_TTL"`
+	AdminAPIToken    string `envconfig:"ADMIN_API_TOKEN"`
 }
