@@ -11,7 +11,7 @@ A Go-based web service that converts ISEN Aurion planning data into iCal format,
 - **Concurrency Control**: Distributed locks prevent duplicate planning fetches
 - **Worker-Compatible Contract**: Compatibility routes and trace headers align with the original Worker behavior
 - **Docker Support**: Easy deployment with Docker and docker-compose
-- **Health Monitoring**: Built-in health check endpoint for monitoring
+- **Health Monitoring**: Built-in `/api/health` endpoint with Valkey connectivity status
 - **Privacy First**: No data sharing with third parties, transparent privacy policy
 
 ## Quick Start
@@ -58,17 +58,27 @@ go run cmd/server/main.go
 
 #### Health Check
 ```
-GET /health
+GET /api/health
 ```
 
 Returns the health status of the service.
 
-**Response:**
+**Responses:**
+- `200 OK`
 ```json
 {
   "status": "healthy"
 }
 ```
+- `503 Service Unavailable` when Valkey is disconnected
+```json
+{
+  "status": "unhealthy",
+  "valkey": "disconnected"
+}
+```
+
+`/health` is not registered and returns `404 Not Found`.
 
 #### Home Page
 ```
@@ -80,6 +90,22 @@ Returns the HTML homepage with API documentation.
 **Headers:**
 - `Accept: text/html` - Returns HTML documentation
 - `Authorization: Basic <base64>` - Returns iCal data directly
+
+#### Direct iCal Access with Basic Auth
+```
+GET /
+Authorization: Basic <base64(email:password)>
+```
+
+Returns iCal directly when `Accept` does not include `text/html`.
+
+**Successful Response Headers:**
+- `Content-Type: text/calendar; charset=utf-8`
+- `Content-Disposition: attachment; filename="isen-ical.ics"`
+
+**Error Responses:**
+- `401 Unauthorized` + `WWW-Authenticate: Basic realm="Identifiants Aurion"`
+- `403 Forbidden` - Invalid credentials
 
 #### Generate Token
 ```
@@ -180,20 +206,23 @@ Both routes return `204 No Content` for client compatibility.
 
 | Variable              | Description                               | Default                    | Required |
 |-----------------------|-------------------------------------------|----------------------------|----------|
-| `VALKEY_URL`          | Valkey connection URL                     | `redis://localhost:6379`   | Yes      |
+| `VALKEY_URL`          | Valkey/Redis-compatible connection URL    | `redis://localhost:6379`   | No       |
 | `PORT`                | HTTP server port                          | `8080`                     | No       |
-| `AURION_BASE_URL`     | Aurion system base URL                    | `https://aurion.junia.com` | Yes      |
+| `AURION_BASE_URL`     | Aurion system base URL                    | `https://aurion.junia.com` | No       |
 | `MAX_TOKENS_PER_USER` | Maximum tokens per user                   | `3`                        | No       |
 | `SESSION_TTL`         | Session cache TTL in seconds              | `3600`                     | No       |
 | `CACHE_TTL`           | Events cache TTL in seconds               | `3600`                     | No       |
 | `ENCRYPTION_KEY`      | 32-byte hex key for additional encryption | -                          | No       |
 | `GIN_MODE`            | Gin framework mode (`release` or `debug`) | `debug`                    | No       |
+| `ADMIN_API_TOKEN`     | Admin bearer token (currently reserved routes) | -                     | No       |
 
 ### Valkey URL Format
 
 ```
 redis://[:password@]host[:port][/db]
-rediss://[:password@]host[:port][/db]  # TLS enabled
+rediss://[:password@]host[:port][/db]   # TLS enabled
+valkey://[:password@]host[:port][/db]   # format used in .env.example/tests
+valkeys://[:password@]host[:port][/db]  # format used in .env.example/tests
 ```
 
 Examples:
@@ -247,6 +276,7 @@ The `ENCRYPTION_KEY` is optional but recommended for production. It must be:
 - `ical/` - iCalendar format generation
 - `session/` - Session management and caching
 - `token/` - Token generation and encryption
+- `template/` - HTML template rendering helper used by handlers
 
 **Storage** (`internal/storage/`)
 - Valkey client wrapper with connection pooling
@@ -262,8 +292,8 @@ The `ENCRYPTION_KEY` is optional but recommended for production. It must be:
 - Data structures for events, credentials, and tokens
 
 **Config** (`internal/config/`)
-- Environment-based configuration loading
-- Default values and validation
+- Shared runtime config struct consumed by handlers/services
+- Values are assembled from CLI flags + env sources in `cmd/server/main.go`
 
 ## Usage Examples
 
@@ -350,9 +380,9 @@ go test ./internal/handlers/...
 │   │   ├── auth/             # Authentication
 │   │   ├── ical/             # iCal generation
 │   │   ├── session/          # Session management
-│   │   └── token/            # Token service
+│   │   ├── token/            # Token service
+│   │   └── template/         # HTML template helper
 │   ├── storage/              # Valkey storage
-│   └── templates/            # HTML templates
 ├── tests/
 │   └── integration_test.go   # Integration tests
 ├── docker-compose.yml        # Docker composition

@@ -76,6 +76,6 @@ docker build -t isen-ical .
 ```
 
 ## NOTES
-- README still documents `/health`; current server registers `/api/health` only and tests expect `/health` to return 404.
+- README endpoint docs track current routes (`/api/health` active; `/health` expected 404 in tests).
 - `internal/handlers` embeds templates via `//go:embed`; keep template names stable.
 - One root AGENTS plus scoped child AGENTS are authoritative; avoid duplicating full project context in child files.
