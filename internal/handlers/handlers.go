@@ -57,7 +57,7 @@ func (h *Handlers) RegisterRoutes(r *gin.Engine) {
 	r.GET("/privacy", h.Privacy)
 	r.GET("/favicon.ico", h.Favicon)
 	r.GET("/.well-known/appspecific/com.chrome.devtools.json", h.ChromeDevtoolsProbe)
-	r.GET("/health", h.Health)
+	r.GET("/api/health", h.Health)
 }
 
 // Home gère la route racine et affiche soit la page d'accueil, soit le calendrier en fonction du header Accept.
